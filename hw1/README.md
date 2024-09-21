@@ -1,10 +1,11 @@
 # HW1
 
-Your Name (Please replace with your name.)
+Srihith Bharadwaj Burra
 
-Your SBU ID (Please replace with your 9-digit SBU ID.)
+116728900
 
-Your Email (Please replace with your email.)
+srihithbharadw.burra@stonybrook.edu
+srburra@cs.stonybrook.edu
 
 ## Overview
 
