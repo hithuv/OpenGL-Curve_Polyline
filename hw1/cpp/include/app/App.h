@@ -72,6 +72,14 @@ private:
     // (while lastMouseLeftClickPos, if there is one, remains the original value).
     glm::dvec2 lastMouseLeftClickPos {0.0, 0.0};
     glm::dvec2 lastMouseLeftPressPos {0.0, 0.0};
+
+    //defined by Srihith
+    //test if C is pressed for polyline completion to polygon
+    bool cPressed = false;
+    //to save corners of polyline:
+    std::vector<std::vector<glm::dvec2>> polylineCorners;
+
+
 };
 
 

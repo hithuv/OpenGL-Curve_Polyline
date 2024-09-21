@@ -51,9 +51,14 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
     // Display a preview line which moves with the mouse cursor iff.
     // the most-recent mouse click is left click.
     // showPreview is controlled by mouseButtonCallback.
+
+    
+
     if (app.showPreview)
     {
         auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
+        
+
 
         auto x0 = static_cast<int>(app.lastMouseLeftPressPos.x);
         auto y0 = static_cast<int>(app.lastMouseLeftPressPos.y);
@@ -61,9 +66,45 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
         auto y1 = static_cast<int>(app.mousePos.y);
 
         pixel->path.clear();
+        int polyLineSize = app.polylineCorners.size();
+        for(int i = 0; i<polyLineSize - 1; i++){
+            // std::cout<<"{"<<app.polylineCorners[i][0].x<<" ,"<< app.polylineCorners[i][0].y<<"} ,{"<< app.polylineCorners[i][1].x<<" ,"<< app.polylineCorners[i][1].y<<" }"<<std::endl;
+            bresenhamLine(pixel->path, app.polylineCorners[i][0].x, app.polylineCorners[i][0].y, app.polylineCorners[i][1].x, app.polylineCorners[i][1].y);
+        }
+        // std::cout<<"---"<<std::endl;
+        
         bresenhamLine(pixel->path, x0, y0, x1, y1);
         pixel->dirty = true;
     }
+
+    else if (!app.showPreview && app.polylineCorners.size())
+    {
+        auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
+        
+
+
+        auto x0 = static_cast<int>(app.lastMouseLeftPressPos.x);
+        auto y0 = static_cast<int>(app.lastMouseLeftPressPos.y);
+        auto x1 = static_cast<int>(app.mousePos.x);
+        auto y1 = static_cast<int>(app.mousePos.y);
+
+        pixel->path.clear();
+        int polyLineSize = app.polylineCorners.size();
+        for(int i = 0; i<polyLineSize; i++){
+            // std::cout<<"{"<<app.polylineCorners[i][0].x<<" ,"<< app.polylineCorners[i][0].y<<"} ,{"<< app.polylineCorners[i][1].x<<" ,"<< app.polylineCorners[i][1].y<<" }"<<std::endl;
+            bresenhamLine(pixel->path, app.polylineCorners[i][0].x, app.polylineCorners[i][0].y, app.polylineCorners[i][1].x, app.polylineCorners[i][1].y);
+        }
+        if(app.cPressed){
+            // std::cout<<"{"<<app.polylineCorners[0][0].x<<" ,"<< app.polylineCorners[0][0].y<<"} ,{"<< app.polylineCorners.back()[1].x<<" ,"<< app.polylineCorners.back()[1].y<<" }"<<std::endl;
+            bresenhamLine(pixel->path, app.polylineCorners[0][0].x, app.polylineCorners[0][0].y, app.polylineCorners.back()[1].x, app.polylineCorners.back()[1].y);
+        }
+        // std::cout<<"---"<<std::endl;
+        
+        // bresenhamLine(pixel->path, x0, y0, x1, y1);
+        pixel->dirty = true;
+        app.polylineCorners.clear();
+    }
+
 }
 
 
@@ -81,6 +122,15 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
     {
         app.animationEnabled = !app.animationEnabled;
     }
+
+    if (key == GLFW_KEY_C){
+        if (action == GLFW_PRESS) {
+            app.cPressed = true;
+        }
+        else if (action == GLFW_RELEASE) {
+            app.cPressed = false;
+        }
+    }
 }
 
 
@@ -95,11 +145,15 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
             app.mousePressed = true;
             app.lastMouseLeftClickPos = app.mousePos;
             app.lastMouseLeftPressPos = app.mousePos;
+            
         }
         else if (action == GLFW_RELEASE)
         {
             app.mousePressed = false;
             app.showPreview = true;
+            if(app.polylineCorners.size() != 0)app.polylineCorners.back().push_back(app.mousePos);
+            
+            app.polylineCorners.push_back({app.mousePos});
 
             #ifdef DEBUG_MOUSE_POS
             std::cout << "[ " << app.mousePos.x << ' ' << app.mousePos.y << " ]\n";
@@ -109,9 +163,13 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
 
     if (button == GLFW_MOUSE_BUTTON_RIGHT)
     {
+        if(app.polylineCorners.size() != 0)app.polylineCorners.back().push_back(app.mousePos);
+            
+        // app.polylineCorners.push_back({app.mousePos});
         if (action == GLFW_RELEASE)
         {
             app.showPreview = false;
+            
         }
     }
 }
