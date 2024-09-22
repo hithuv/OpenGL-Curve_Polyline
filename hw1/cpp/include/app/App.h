@@ -16,7 +16,8 @@ class Renderable;
 enum Mode {
   LINE_MODE = 1,
   POLYLINE_MODE = 3,
-  ELLIPSE_MODE = 4
+  ELLIPSE_MODE = 4,
+  CIRCLE_MODE = 8
 };
 
 
@@ -90,6 +91,8 @@ private:
     Mode currentMode = LINE_MODE;
     //draw Ellipse
     static void drawEllipse(std::vector<Pixel::Vertex> & path, int x0, int y0, int x1, int y1);
+    //to track if Shift is pressed in ellipse Mode
+    bool shiftPressed = false;
 
 
 };

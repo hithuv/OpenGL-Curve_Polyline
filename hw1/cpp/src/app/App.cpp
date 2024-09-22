@@ -56,7 +56,7 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
 
     
 
-    if (app.showPreview && app.currentMode == LINE_MODE || app.currentMode == POLYLINE_MODE)
+    if (app.showPreview && (app.currentMode == LINE_MODE || app.currentMode == POLYLINE_MODE))
     {
 
         auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
@@ -107,7 +107,7 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
         pixel->dirty = true;
         app.polylineCorners.clear();
     }
-    if(app.showPreview /*&& app.currentMode == ELLIPSE_MODE*/){
+    else if(app.showPreview && app.currentMode == ELLIPSE_MODE){
         auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
         
         auto x0 = static_cast<int>(app.lastMouseLeftPressPos.x);
@@ -118,6 +118,22 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
         pixel->path.clear();
 
         drawEllipse(pixel->path, x0, y0, x1, y1);
+
+        pixel->dirty = true;
+    }
+    else if(app.showPreview && app.currentMode == CIRCLE_MODE){
+        auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
+        
+        auto x0 = static_cast<int>(app.lastMouseLeftPressPos.x);
+        auto y0 = static_cast<int>(app.lastMouseLeftPressPos.y);
+        auto x1 = static_cast<int>(app.mousePos.x);
+        auto y1 = static_cast<int>(app.mousePos.y);
+        int r2 = (x1-x0)*(x1-x0) + (y1-y0)*(y1-y0);
+        int r = sqrt(r2);
+
+        pixel->path.clear();
+
+        drawEllipse(pixel->path, x0, y0, x0+r, y0+r);
 
         pixel->dirty = true;
     }
@@ -142,11 +158,18 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
 
     if(key == GLFW_KEY_1){
         app.polylineCorners.clear();
+        app.showPreview = false;
         app.currentMode = LINE_MODE;
     }
     if(key == GLFW_KEY_3){
         // app.polylineCorners.clear();
+        app.showPreview = false;
         app.currentMode = POLYLINE_MODE;
+    }
+    if(key == GLFW_KEY_4){
+        app.polylineCorners.clear();
+        app.showPreview = false;
+        app.currentMode = ELLIPSE_MODE;
     }
 
     if (key == GLFW_KEY_C){
@@ -155,6 +178,15 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
         }
         else if (action == GLFW_RELEASE) {
             app.cPressed = false;
+        }
+    }
+
+    if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT){
+        if (action == GLFW_PRESS) {
+            app.shiftPressed = true;
+        }
+        else if (action == GLFW_RELEASE) {
+            app.shiftPressed = false;
         }
     }
 }
@@ -175,6 +207,13 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
         }
         else if (action == GLFW_RELEASE)
         {
+            if(app.currentMode == ELLIPSE_MODE && app.shiftPressed == true){
+                app.currentMode = CIRCLE_MODE;
+            }
+            if(app.currentMode == CIRCLE_MODE && app.shiftPressed == false){
+                app.currentMode = ELLIPSE_MODE;
+            }
+
             app.mousePressed = false;
             app.showPreview = true;
             if(app.currentMode == POLYLINE_MODE){
@@ -190,11 +229,12 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
 
     if (button == GLFW_MOUSE_BUTTON_RIGHT)
     {
-        if(app.currentMode == POLYLINE_MODE)if(app.polylineCorners.size() != 0)app.polylineCorners.back().push_back(app.mousePos);
+        
             
         // app.polylineCorners.push_back({app.mousePos});
         if (action == GLFW_RELEASE)
         {
+            if(app.currentMode == POLYLINE_MODE)if(app.polylineCorners.size() != 0)app.polylineCorners.back().push_back(app.mousePos);
             app.showPreview = false;
             
         }
@@ -411,11 +451,6 @@ void App::drawEllipse(std::vector<Pixel::Vertex> & path, int xc, int yc, int rx_
         path.emplace_back(xc+x, yc-y, 1.0f, 1.0f, 1.0f);
         path.emplace_back(xc-x, yc-y, 1.0f, 1.0f, 1.0f);
     }
-
-    // double p2 = ry*ry*()
-
-
-
 
 
 }
