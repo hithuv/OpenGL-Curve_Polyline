@@ -52,32 +52,35 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
     // the most-recent mouse click is left click.
     // showPreview is controlled by mouseButtonCallback.
 
+
+
     
 
-    if (app.showPreview)
+    if (app.showPreview && currentMode == LINE_MODE || currentMode == POLYLINE_MODE)
     {
+
         auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
         
-
-
         auto x0 = static_cast<int>(app.lastMouseLeftPressPos.x);
         auto y0 = static_cast<int>(app.lastMouseLeftPressPos.y);
         auto x1 = static_cast<int>(app.mousePos.x);
         auto y1 = static_cast<int>(app.mousePos.y);
 
         pixel->path.clear();
-        int polyLineSize = app.polylineCorners.size();
-        for(int i = 0; i<polyLineSize - 1; i++){
-            // std::cout<<"{"<<app.polylineCorners[i][0].x<<" ,"<< app.polylineCorners[i][0].y<<"} ,{"<< app.polylineCorners[i][1].x<<" ,"<< app.polylineCorners[i][1].y<<" }"<<std::endl;
-            bresenhamLine(pixel->path, app.polylineCorners[i][0].x, app.polylineCorners[i][0].y, app.polylineCorners[i][1].x, app.polylineCorners[i][1].y);
+
+        if(app.currentMode == POLYLINE_MODE){
+            int polyLineSize = app.polylineCorners.size();
+            for(int i = 0; i<polyLineSize - 1; i++){
+                // std::cout<<"{"<<app.polylineCorners[i][0].x<<" ,"<< app.polylineCorners[i][0].y<<"} ,{"<< app.polylineCorners[i][1].x<<" ,"<< app.polylineCorners[i][1].y<<" }"<<std::endl;
+                bresenhamLine(pixel->path, app.polylineCorners[i][0].x, app.polylineCorners[i][0].y, app.polylineCorners[i][1].x, app.polylineCorners[i][1].y);
+            }
         }
-        // std::cout<<"---"<<std::endl;
         
         bresenhamLine(pixel->path, x0, y0, x1, y1);
         pixel->dirty = true;
     }
 
-    else if (!app.showPreview && app.polylineCorners.size())
+    else if (app.currentMode == POLYLINE_MODE && !app.showPreview && app.polylineCorners.size())
     {
         auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
         
@@ -123,6 +126,15 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
         app.animationEnabled = !app.animationEnabled;
     }
 
+    if(key == GLFW_KEY_1){
+        app.polylineCorners.clear();
+        app.currentMode = LINE_MODE;
+    }
+    if(key == GLFW_KEY_3){
+        // app.polylineCorners.clear();
+        app.currentMode = POLYLINE_MODE;
+    }
+
     if (key == GLFW_KEY_C){
         if (action == GLFW_PRESS) {
             app.cPressed = true;
@@ -151,10 +163,11 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
         {
             app.mousePressed = false;
             app.showPreview = true;
-            if(app.polylineCorners.size() != 0)app.polylineCorners.back().push_back(app.mousePos);
+            if(app.currentMode == POLYLINE_MODE){
+                if(app.polylineCorners.size() != 0)app.polylineCorners.back().push_back(app.mousePos);
+                app.polylineCorners.push_back({app.mousePos});
+            }
             
-            app.polylineCorners.push_back({app.mousePos});
-
             #ifdef DEBUG_MOUSE_POS
             std::cout << "[ " << app.mousePos.x << ' ' << app.mousePos.y << " ]\n";
             #endif
@@ -163,7 +176,7 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
 
     if (button == GLFW_MOUSE_BUTTON_RIGHT)
     {
-        if(app.polylineCorners.size() != 0)app.polylineCorners.back().push_back(app.mousePos);
+        if(app.currentMode == POLYLINE_MODE)if(app.polylineCorners.size() != 0)app.polylineCorners.back().push_back(app.mousePos);
             
         // app.polylineCorners.push_back({app.mousePos});
         if (action == GLFW_RELEASE)
@@ -253,36 +266,39 @@ void App::bresenhamLine(std::vector<Pixel::Vertex> & path, int x0, int y0, int x
 
     }
 
-    if(x1<x0){
-        bresenhamLine(path, x1, y1, x0, y0);
-        return;
-    }
+    else{
+        if(x1<x0){
+            bresenhamLine(path, x1, y1, x0, y0);
+            return;
+        }
 
+        
+
+        path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+
+
+        while (x < x1)
+        {
+            ++x;
+
+            if (p < 0)
+            {
+                p += twoDy;
+            }
+            else
+            {
+                ++y;
+                p += twoDyMinusDx;
+            }
+            if(y1<=y0 && x1>x0){
+                path.emplace_back(x, y0 - (y-y0), 1.0f, 1.0f, 1.0f);
+            }
+            else if(y1>=y0 && x1>x0){
+                path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+            }
+        }
+    }
     
-
-    path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
-
-
-    while (x < x1)
-    {
-        ++x;
-
-        if (p < 0)
-        {
-            p += twoDy;
-        }
-        else
-        {
-            ++y;
-            p += twoDyMinusDx;
-        }
-        if(y1<=y0 && x1>x0){
-            path.emplace_back(x, y0 - (y-y0), 1.0f, 1.0f, 1.0f);
-        }
-        else if(y1>=y0 && x1>x0){
-            path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
-        }
-    }
 }
 
 

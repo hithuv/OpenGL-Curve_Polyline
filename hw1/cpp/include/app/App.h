@@ -13,6 +13,13 @@
 class Shader;
 class Renderable;
 
+enum Mode {
+  LINE_MODE = 1,
+  POLYLINE_MODE = 3
+};
+
+
+
 
 class App : private Window
 {
@@ -78,6 +85,8 @@ private:
     bool cPressed = false;
     //to save corners of polyline:
     std::vector<std::vector<glm::dvec2>> polylineCorners;
+    //to track mode
+    Mode currentMode = LINE_MODE;
 
 
 };
