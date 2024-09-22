@@ -15,7 +15,8 @@ class Renderable;
 
 enum Mode {
   LINE_MODE = 1,
-  POLYLINE_MODE = 3
+  POLYLINE_MODE = 3,
+  ELLIPSE_MODE = 4
 };
 
 
@@ -87,6 +88,8 @@ private:
     std::vector<std::vector<glm::dvec2>> polylineCorners;
     //to track mode
     Mode currentMode = LINE_MODE;
+    //draw Ellipse
+    static void drawEllipse(std::vector<Pixel::Vertex> & path, int x0, int y0, int x1, int y1);
 
 
 };

@@ -56,7 +56,7 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
 
     
 
-    if (app.showPreview && currentMode == LINE_MODE || currentMode == POLYLINE_MODE)
+    if (app.showPreview && app.currentMode == LINE_MODE || app.currentMode == POLYLINE_MODE)
     {
 
         auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
@@ -106,6 +106,20 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
         // bresenhamLine(pixel->path, x0, y0, x1, y1);
         pixel->dirty = true;
         app.polylineCorners.clear();
+    }
+    if(app.showPreview /*&& app.currentMode == ELLIPSE_MODE*/){
+        auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
+        
+        auto x0 = static_cast<int>(app.lastMouseLeftPressPos.x);
+        auto y0 = static_cast<int>(app.lastMouseLeftPressPos.y);
+        auto x1 = static_cast<int>(app.mousePos.x);
+        auto y1 = static_cast<int>(app.mousePos.y);
+
+        pixel->path.clear();
+
+        drawEllipse(pixel->path, x0, y0, x1, y1);
+
+        pixel->dirty = true;
     }
 
 }
@@ -338,4 +352,70 @@ void App::render()
     {
         s->render();
     }
+}
+
+//Srihith
+void App::drawEllipse(std::vector<Pixel::Vertex> & path, int xc, int yc, int rx_actual, int ry_actual){
+
+    if(rx_actual < xc){
+        rx_actual = xc + xc - rx_actual;
+    }
+    if(ry_actual < yc){
+        ry_actual = yc + yc - ry_actual;
+    }
+
+    int rx = rx_actual - xc;
+    int ry = ry_actual - yc;
+    int x = 0;
+    int y = ry;
+
+    double p1 = ry*ry - rx*rx*ry + 0.25*rx*rx;
+    path.emplace_back(xc+x, yc+y, 1.0f, 1.0f, 1.0f);
+    path.emplace_back(xc-x, yc+y, 1.0f, 1.0f, 1.0f);
+    path.emplace_back(xc+x, yc-y, 1.0f, 1.0f, 1.0f);
+    path.emplace_back(xc-x, yc-y, 1.0f, 1.0f, 1.0f);
+
+
+    while(2*rx*rx*y >= 2*ry*ry*(++x)){
+        if(p1< 0){
+            p1 += 2*ry*ry*x + ry*ry;
+        }
+        else{
+            y -= 1; 
+            p1+= 2*ry*ry*x - 2*rx*rx*y + ry*ry;
+        }
+        path.emplace_back(xc+x, yc+y, 1.0f, 1.0f, 1.0f);
+        path.emplace_back(xc-x, yc+y, 1.0f, 1.0f, 1.0f);
+        path.emplace_back(xc+x, yc-y, 1.0f, 1.0f, 1.0f);
+        path.emplace_back(xc-x, yc-y, 1.0f, 1.0f, 1.0f);
+    }
+
+    x = rx;
+    y = 0;
+
+    double p2 = rx*rx - ry*ry*rx + 0.25*ry*ry;
+    path.emplace_back(xc+x, yc+y, 1.0f, 1.0f, 1.0f);
+    path.emplace_back(xc-x, yc+y, 1.0f, 1.0f, 1.0f);
+    path.emplace_back(xc+x, yc-y, 1.0f, 1.0f, 1.0f);
+    path.emplace_back(xc-x, yc-y, 1.0f, 1.0f, 1.0f);
+    while(2*rx*rx*(++y) < 2*ry*ry*(x)){
+        if(p2< 0){
+            p2 += 2*rx*rx*y + rx*rx;
+        }
+        else{
+            x -= 1; 
+            p2+= 2*rx*rx*y - 2*ry*ry*x + rx*rx;
+        }
+        path.emplace_back(xc+x, yc+y, 1.0f, 1.0f, 1.0f);
+        path.emplace_back(xc-x, yc+y, 1.0f, 1.0f, 1.0f);
+        path.emplace_back(xc+x, yc-y, 1.0f, 1.0f, 1.0f);
+        path.emplace_back(xc-x, yc-y, 1.0f, 1.0f, 1.0f);
+    }
+
+    // double p2 = ry*ry*()
+
+
+
+
+
 }
