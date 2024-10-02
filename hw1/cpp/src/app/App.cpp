@@ -512,56 +512,148 @@ void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, dou
             xminus1_2 = x1_2;
         }
     }
-    int x = 0;
-    double y = a3*x*x*x + a2*x*x + a1*x + a0;
+    double x = 0;
     double slope = 3*a3*x*x + 2*a2*x + a1;
     double slopeAdd1 = 6*a3*x+3*a3+2*a2;
     double slopeAdd2 = 6*a3;
     double slopeAtEnd = abs(3*a3*kWindowWidth*kWindowWidth + 2*a2*kWindowWidth + a1);
-    double steps = 1/kWindowHeight;
-    
-    while(x <= x1_1){
+    double steps = 1.0/10;
+    int _y;
+    int _py;
+    while(x <= x1_1 && x<=kWindowWidth){
+        _py = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0-1;
         for(double i = 0; i<1; i = i+steps){
-            y = int(a3*(x+i)*(x+i)*(x+1) + a2* (x+i)*(x+i) + a1*(x+1) + a0 + 0.5);
-            if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
-            else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
-            // if(x<kWindowWidth){
-            //     if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
-            //     else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
-            // }
-            // if(2*mid_x - x >=0){
-            //     if(reverseSign)path.emplace_back(2*mid_x - x, -y, 1.0f, 1.0f, 1.0f);
-            //     else path.emplace_back(2*mid_x - x, y, 1.0f, 1.0f, 1.0f);
-            // }
-        }
-        x++;
-        slopeAtEnd += 2*a2;
-        steps = 1/slopeAtEnd;
-    }
-
-
-
-
-    while(x<kWindowWidth){
-        if(slope < -1){
-            for(double i = 0; i<1; i = i+steps){
-                y = int(a2*(x+i)*(x+i) + a1* (x+i) + a0 + 0.5);
-                if(x<kWindowWidth)path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+            _y = int(a3*(x+i)*(x+i)*(x+i) + a2* (x+i)*(x+i) + a1*(x+i) + a0 + 0.5);
+            std::cout<<"-- x = "<<x+i<< ", y = "<< _y << ", _py = "<<_py<<", steps: "<<steps<<std::endl;
+            if(_py!=_y){
+                
+                if(reverseSign)path.emplace_back(x, -_y, 1.0f, 1.0f, 1.0f);
+                else path.emplace_back(x, _y, 1.0f, 1.0f, 1.0f);
+            }
+            while(_py<_y){
+                if(reverseSign)path.emplace_back(x, -_py, 1.0f, 1.0f, 1.0f);
+                else path.emplace_back(x, _py, 1.0f, 1.0f, 1.0f);
+                _py++;
             }
         }
-        else if(slope <0){
-            
-        }
-        else if (slope <= 1){
+        x++;
+    }
+    
+    double _ty = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0;
+    int y = _ty;
+    double p1 = _ty - y - 0.5;
 
+    while(x <= x0_1 && x<=kWindowWidth){
+        if(p1>0){
+            y++;
+            p1-=1;
         }
-        else{
+        p1+= 3*a3*x*x+x*(3*a3 + 2*a2)+a1+a2+a3;
+        if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
+        else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+        x++;
+    }
+    _ty = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0;
+    y = (_ty+0.5);
+    p1 = _ty - int(_ty) - 0.5;
+    while(x <= xminus1_1 && x<=kWindowWidth){
+        if(p1<0){
+            p1+=1;
+            y--;
+        }
+        p1+=3*a3*x*x+x*(3*a3 + 2*a2)+a1+a2+a3;
+        if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
+        else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+        x++;
+    }
 
+    while(x<=xminus1_2 && x<=kWindowWidth){
+        _py = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0-0.5;;
+        for(double i = 0; i<1; i = i+steps){
+            _y = int(a3*(x+i)*(x+i)*(x+i) + a2* (x+i)*(x+i) + a1*(x+i) + a0 + 0.5);
+            if(_py!=_y){
+                std::cout<<"x = "<<x<< ", y = "<< _y <<std::endl;
+                if(reverseSign)path.emplace_back(x, -_y, 1.0f, 1.0f, 1.0f);
+                else path.emplace_back(x, _y, 1.0f, 1.0f, 1.0f);
+            }
+            while(_py>_y){
+                if(reverseSign)path.emplace_back(x, -_py, 1.0f, 1.0f, 1.0f);
+                else path.emplace_back(x, _py, 1.0f, 1.0f, 1.0f);
+                _py--;
+            }
         }
         x++;
-        slope+=slopeAdd1;
-        slopeAdd1+=slopeAdd2;
     }
+    _ty = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0;
+    y = (_ty+0.5);
+    p1 = _ty - int(_ty) - 0.5;
+    while(x <= x0_2 && x<=kWindowWidth){
+        if(p1<0){
+            p1+=1;
+            y--;
+        }
+        p1+=3*a3*x*x+x*(3*a3 + 2*a2)+a1+a2+a3;
+        if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
+        else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+        x++;
+    }
+
+    _ty = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0;
+    y = _ty;
+    p1 = _ty - y - 0.5;
+
+    while(x <= x1_2 && x<=kWindowWidth){
+        if(p1>0){
+            y++;
+            p1-=1;
+        }
+        p1+= 3*a3*x*x+x*(3*a3 + 2*a2)+a1+a2+a3;
+        if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
+        else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+        x++;
+    }
+    while(x<= kWindowWidth){
+        _py = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0-0.5;;
+        for(double i = 0; i<1; i = i+steps){
+            _y = int(a3*(x+i)*(x+i)*(x+i) + a2* (x+i)*(x+i) + a1*(x+i) + a0 + 0.5);
+            if(_py!=_y){
+                std::cout<<"x = "<<x<< ", y = "<< _y <<std::endl;
+                if(reverseSign)path.emplace_back(x, -_y, 1.0f, 1.0f, 1.0f);
+                else path.emplace_back(x, _y, 1.0f, 1.0f, 1.0f);
+            }
+            while(_py<_y){
+                if(reverseSign)path.emplace_back(x, -_py, 1.0f, 1.0f, 1.0f);
+                else path.emplace_back(x, _py, 1.0f, 1.0f, 1.0f);
+                _py++;
+            }
+        }
+        x++;
+    }
+
+
+
+
+
+    // while(x<kWindowWidth){
+    //     if(slope < -1){
+    //         for(double i = 0; i<1; i = i+steps){
+    //             y = int(a2*(x+i)*(x+i) + a1* (x+i) + a0 + 0.5);
+    //             if(x<kWindowWidth)path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+    //         }
+    //     }
+    //     else if(slope <0){
+            
+    //     }
+    //     else if (slope <= 1){
+
+    //     }
+    //     else{
+
+    //     }
+    //     x++;
+    //     slope+=slopeAdd1;
+    //     slopeAdd1+=slopeAdd2;
+    // }
 }
 
 void App::drawQuadratic(std::vector<Pixel::Vertex> & path, double a2, double a1, double a0){
