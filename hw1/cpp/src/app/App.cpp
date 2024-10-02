@@ -479,16 +479,67 @@ void App::drawEllipse(std::vector<Pixel::Vertex> & path, int xc, int yc, int rx_
 }
 
 void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, double a1, double a0){
+    bool reverseSign = false;
+    if(a3<0){
+        a3 = -a3;
+        a2 = -a2;
+        a1 = -a1;
+        a0 = -a0;
+        reverseSign = true;
+    }
+    double x0_1=kWindowWidth+1, x0_2=kWindowWidth+1, xminus1_1=kWindowWidth+1;
+    double xminus1_2=kWindowWidth+1, x1_1=kWindowWidth+1, x1_2=kWindowWidth+1;
+    double discriminant = 4*a2*a2 - 4*a3*(a1-1);
+    if (discriminant > 0) {
+        x1_1 = (-(2*a2) + sqrt(discriminant)) / (2*a3);
+        x1_2 = (-(2*a2) - sqrt(discriminant)) / (2*a3);
+        if(discriminant-4*a3>0){
+            x0_1 = (-(2*a2) + sqrt(discriminant-4*a3)) / (2*a3);
+            x0_2 = (-(2*a2) - sqrt(discriminant-4*a3)) / (2*a3);
+            if(discriminant - 8*a3 > 0){
+                xminus1_1 = (-(2*a2) + sqrt(discriminant-4*a3)) / (2*a3);
+                xminus1_2 = (-(2*a2) - sqrt(discriminant-4*a3)) / (2*a3);;
+            }
+            else{
+                xminus1_1 = x0_2;
+                xminus1_2 = x0_2;
+            }
+        }
+        else{
+            x0_1 = x1_2;
+            x0_2 = x1_2;
+            xminus1_1 = x1_2;
+            xminus1_2 = x1_2;
+        }
+    }
     int x = 0;
     double y = a3*x*x*x + a2*x*x + a1*x + a0;
     double slope = 3*a3*x*x + 2*a2*x + a1;
     double slopeAdd1 = 6*a3*x+3*a3+2*a2;
     double slopeAdd2 = 6*a3;
     double slopeAtEnd = abs(3*a3*kWindowWidth*kWindowWidth + 2*a2*kWindowWidth + a1);
-    double steps = 1/(slopeAtEnd);
-    if(abs(a1) > slopeAtEnd){
-        slopeAtEnd = abs(a1);
+    double steps = 1/kWindowHeight;
+    
+    while(x <= x1_1){
+        for(double i = 0; i<1; i = i+steps){
+            y = int(a3*(x+i)*(x+i)*(x+1) + a2* (x+i)*(x+i) + a1*(x+1) + a0 + 0.5);
+            if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
+            else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+            // if(x<kWindowWidth){
+            //     if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
+            //     else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+            // }
+            // if(2*mid_x - x >=0){
+            //     if(reverseSign)path.emplace_back(2*mid_x - x, -y, 1.0f, 1.0f, 1.0f);
+            //     else path.emplace_back(2*mid_x - x, y, 1.0f, 1.0f, 1.0f);
+            // }
+        }
+        x++;
+        slopeAtEnd += 2*a2;
+        steps = 1/slopeAtEnd;
     }
+
+
 
 
     while(x<kWindowWidth){
