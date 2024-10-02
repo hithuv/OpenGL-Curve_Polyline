@@ -17,7 +17,8 @@ enum Mode {
   LINE_MODE = 1,
   POLYLINE_MODE = 3,
   ELLIPSE_MODE = 4,
-  CIRCLE_MODE = 8
+  CIRCLE_MODE = 8,
+  POLYNOMIAL_MODE = 5
 };
 
 
@@ -31,7 +32,7 @@ public:
     void run();
 
 private:
-    // GLFW callbacks.
+    // GLFW callbacks.cd 
     static void cursorPosCallback(GLFWwindow *, double, double);
     static void framebufferSizeCallback(GLFWwindow *, int, int);
     static void keyCallback(GLFWwindow *, int, int, int, int);
@@ -43,8 +44,8 @@ private:
 
     // from CMakeLists.txt, compile definition
     static constexpr char kWindowName[] {WINDOW_NAME};
-    static constexpr int kWindowWidth {1000};
-    static constexpr int kWindowHeight {1000};
+    static constexpr int kWindowWidth {800};
+    static constexpr int kWindowHeight {800};
 
 private:
     /// Bresenham line-drawing algorithm for line (x0, y0) -> (x1, y1) in screen space,
@@ -83,6 +84,8 @@ private:
     glm::dvec2 lastMouseLeftPressPos {0.0, 0.0};
 
     //defined by Srihith
+    //reset to new mode:s
+    // static void resetMode();
     //test if C is pressed for polyline completion to polygon
     bool cPressed = false;
     //to save corners of polyline:
@@ -93,6 +96,12 @@ private:
     static void drawEllipse(std::vector<Pixel::Vertex> & path, int x0, int y0, int x1, int y1);
     //to track if Shift is pressed in ellipse Mode
     bool shiftPressed = false;
+    // coeffs for cubic polynomial.
+    double a3 = 0, a2 = 0, a1 = 0, a0 = 0;
+    // draw cubic
+    static void drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, double a1, double a0);
+    
+    static void drawQuadratic(std::vector<Pixel::Vertex> & path, double a2, double a1, double a0);
 
 
 };

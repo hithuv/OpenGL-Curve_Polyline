@@ -12,7 +12,6 @@ App & App::getInstance()
     return instance;
 }
 
-
 void App::run()
 {
     while (!glfwWindowShouldClose(pWindow))
@@ -105,7 +104,7 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
         
         // bresenhamLine(pixel->path, x0, y0, x1, y1);
         pixel->dirty = true;
-        app.polylineCorners.clear();
+        app.polylineCorners.clear(); //???
     }
     else if(app.showPreview && app.currentMode == ELLIPSE_MODE){
         auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
@@ -162,7 +161,7 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
         app.currentMode = LINE_MODE;
     }
     if(key == GLFW_KEY_3){
-        // app.polylineCorners.clear();
+        app.polylineCorners.clear();
         app.showPreview = false;
         app.currentMode = POLYLINE_MODE;
     }
@@ -170,6 +169,30 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
         app.polylineCorners.clear();
         app.showPreview = false;
         app.currentMode = ELLIPSE_MODE;
+    }
+    if(key == GLFW_KEY_5 && action == GLFW_PRESS){
+        app.polylineCorners.clear();
+        
+        // std::ifstream file("/home/hithuman/CSE528/StonyBrookCSE528Graphics/hw1/cpp/etc/config.txt");
+        std::ifstream file("etc/config.txt");
+        if(file.is_open()){
+            file >> app.a3 >> app.a2 >> app.a1 >> app.a0;
+        }
+        else {
+            std::cerr<< " File not opened \n";
+            return;
+        }
+        std::cout<<app.a3<< " "<<app.a2<< " "<<app.a1<< " "<<app.a0<<std::endl;
+        app.currentMode = POLYNOMIAL_MODE;
+        auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
+        pixel->path.clear();
+        if(app.a3 == 0){
+            drawQuadratic(pixel->path, app.a2, app.a1, app.a0);
+        }
+        else {
+            drawCubic(pixel->path, app.a3, app.a2, app.a1, app.a0);
+        }
+        pixel->dirty = true;
     }
 
     if (key == GLFW_KEY_C){
@@ -196,7 +219,7 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
 {
     App & app = *reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
 
-    if (button == GLFW_MOUSE_BUTTON_LEFT)
+    if (button == GLFW_MOUSE_BUTTON_LEFT && app.currentMode != POLYNOMIAL_MODE)
     {
         if (action == GLFW_PRESS)
         {
@@ -227,7 +250,7 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
         }
     }
 
-    if (button == GLFW_MOUSE_BUTTON_RIGHT)
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && app.currentMode != POLYNOMIAL_MODE)
     {
         
             
@@ -454,3 +477,160 @@ void App::drawEllipse(std::vector<Pixel::Vertex> & path, int xc, int yc, int rx_
 
 
 }
+
+void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, double a1, double a0){
+    int x = 0;
+    double y = a3*x*x*x + a2*x*x + a1*x + a0;
+    double slope = 3*a3*x*x + 2*a2*x + a1;
+    double slopeAdd1 = 6*a3*x+3*a3+2*a2;
+    double slopeAdd2 = 6*a3;
+    double slopeAtEnd = abs(3*a3*kWindowWidth*kWindowWidth + 2*a2*kWindowWidth + a1);
+    double steps = 1/(slopeAtEnd);
+    if(abs(a1) > slopeAtEnd){
+        slopeAtEnd = abs(a1);
+    }
+
+
+    while(x<kWindowWidth){
+        if(slope < -1){
+            for(double i = 0; i<1; i = i+steps){
+                y = int(a2*(x+i)*(x+i) + a1* (x+i) + a0 + 0.5);
+                if(x<kWindowWidth)path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+            }
+        }
+        else if(slope <0){
+            
+        }
+        else if (slope <= 1){
+
+        }
+        else{
+
+        }
+        x++;
+        slope+=slopeAdd1;
+        slopeAdd1+=slopeAdd2;
+    }
+}
+
+void App::drawQuadratic(std::vector<Pixel::Vertex> & path, double a2, double a1, double a0){
+    bool reverseSign = false;
+    if(a2<0){
+        a2 = -a2;
+        a1 = -a1;
+        a0 = -a0;
+        reverseSign = true;
+    }
+    
+    int x = (-1-a1)/(2*a2);
+    double y_ = a2*x*x + a1*x + a0;
+    double p1 = y_ - int(y_) - 0.5;
+    int y = int(y_);
+    double slope = 2*a2*x + a1;
+    double slopeAdd = 2*a2;
+    
+
+
+
+    while((-1 <= slope) && slope <0){
+
+        if(p1<0){
+            y-=1;
+            p1 +=1;
+        }
+        p1+=2*a2*x+a2+a1;
+        // std::cout<<"x = "<<x<< " ; y = "<<y<<"; p1 = "<<p1<<std::endl;
+        if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
+        else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+        x++;
+        slope+=slopeAdd;
+    }
+    
+    int mid_x = -a1/(2*a2);
+    while((0<= slope) && slope <=1){
+        if(p1>0){
+            y+=1;
+            p1 -=1;
+        }
+        p1+=2*a2*x+a2+a1;
+        // std::cout<<"x = "<<x<< " ; y = "<<y<<"; p1 = "<<p1<<std::endl;
+        if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
+        else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+        x++;
+        slope+=slopeAdd;
+    }
+
+    // double slopeAtEnd = 2*a2*(kWindowWidth) + a1;
+    // if(abs(a1) > slopeAtEnd){
+    //     slopeAtEnd = a1;
+    // }
+    // double steps = 1/(slopeAtEnd);
+    double slopeAtEnd = 2*a2*(x+1) + a1;
+    double steps = 1/(slopeAtEnd);
+
+    while(x < kWindowWidth || 2*mid_x - x >=0){
+        for(double i = 0; i<1; i = i+steps){
+            y = int(a2*(x+i)*(x+i) + a1* (x+i) + a0 + 0.5);
+            
+            if(x<kWindowWidth){
+                if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
+                else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+            }
+            if(2*mid_x - x >=0){
+                if(reverseSign)path.emplace_back(2*mid_x - x, -y, 1.0f, 1.0f, 1.0f);
+                else path.emplace_back(2*mid_x - x, y, 1.0f, 1.0f, 1.0f);
+            }
+        }
+        // if(x<kWindowWidth)path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+        // if(2*mid_x - x >=0)path.emplace_back(2*mid_x - x, y, 1.0f, 1.0f, 1.0f);
+        x++;
+        slopeAtEnd += 2*a2;
+        steps = 1/slopeAtEnd;
+    }
+
+
+    // float d = a2 + a1 + a0 - 1;
+    // int mid_x = -a1/(2*a2);
+    // y_ = a2*x*x + a1*x + a0;
+    // p1 = y_ - int(y_) - 0.5;
+    // y = int(y_);
+
+    // int x1 = y;
+    // int y1 = x;
+    // int mid_y = mid_x;
+
+    // double d = a2/4 + a1/2;
+    // p1 = (a2*y1*y1 + a1*y1 + a0) - int(a2*y1*y1 + a1*y1 + a0) -0.5;
+
+    
+
+    // while (x1 < kWindowHeight && (y1<kWindowWidth || (2*mid_y - y1) > 0)) {
+        
+    //     if (p1 > 0) {
+    //         p1 -=1;
+    //         y1++;
+    //     }
+    //     p1 += a2*y1 + d;
+    //     x1++;
+    //     std::cout<<"x = "<<x1<< " ; y = "<<y1<<"; p1 = "<<p1<<std::endl;
+    //     path.emplace_back(y1, x1, 1.0f, 1.0f, 1.0f);
+    //     path.emplace_back(2*mid_y - y1, x1, 1.0f, 1.0f, 1.0f);
+    // }
+
+
+    // int mid_x = (-a1)/(2*a2);
+    
+
+    // while(x<kWindowWidth || (2*mid_x-x)>=0){
+    //     if(p1>0){
+    //         p1-=1;
+    //         x+=1;
+    //     }
+    //     p1+=a2/4+a2*x+a1/2;
+    //     path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+    //     path.emplace_back((2*mid_x-x), y, 1.0f, 1.0f, 1.0f);
+    //     // std::cout<<"x = "<<x<< " ; y = "<<y<<"; p1 = "<<p1<<std::endl;
+    //     y++;
+    // }
+}
+
