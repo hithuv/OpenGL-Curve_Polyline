@@ -53,6 +53,8 @@ private:
     /// All pixels on this line are appended to path.
     static void bresenhamLine(std::vector<Pixel::Vertex> & path, int x0, int y0, int x1, int y1);
 
+    static void bresenhamLineRed(std::vector<Pixel::Vertex> & path, int x0, int y0, int x1, int y1);
+
     App();
 
     void render();
@@ -90,8 +92,20 @@ private:
     bool cPressed = false;
     //to save corners of polyline:
     std::vector<std::vector<glm::dvec2>> polylineCorners;
+    //check intersection
+    bool checkintersectingLines = false;
+    //save intersecting lines
+    std::vector<int> intersectingLines;
     //to track mode
     Mode currentMode = LINE_MODE;
+    // bool rightClick
+    bool rightClick = false;
+    //complete polygon
+    bool completePolygon = false;
+    //draw redItersecting Lines
+    bool drawIntersections = false;
+    //
+    bool endPolyline = false;
     //draw Ellipse
     static void drawEllipse(std::vector<Pixel::Vertex> & path, int x0, int y0, int x1, int y1);
     //to track if Shift is pressed in ellipse Mode
