@@ -1,9 +1,5 @@
-+0.0001 -0.12 +44 -4800
-Above is positive cubic
-0 0.005 -2.00 250.0
-Above is positive quadratic
+0.0001 -0.12 +44 -4800
 -0.0001 +0.12 -44 +4800
-Above is negative cubic
+0 0.005 -2.00 250.0
 0 -0.005 2.00 350.0
-Above is negative quadratic
 

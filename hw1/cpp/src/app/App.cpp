@@ -16,37 +16,6 @@ int doIntersect(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4){
 
 }
 
-bool onSegment(int x1, int y1, int x2, int y2, int x, int y) {
-    return (x <= std::max(x1, x2) && x >= std::min(x1, x2) &&
-            y <= std::max(y1, y2) && y >= std::min(y1, y2));
-}
-
-int orientation(int x1, int y1, int x2, int y2, int x3, int y3) {
-    int val = (y2 - y1) * (x3 - x2) - (x2 - x1) * (y3 - y2);
-    if (val == 0) return 0;  // Collinear
-    return (val > 0) ? 1 : 2; // Clockwise or counterclockwise
-}
-
-// bool doIntersect(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
-//     int o1 = orientation(x1, y1, x2, y2, x3, y3);
-//     int o2 = orientation(x1, y1, x2, y2, x4, y4);
-//     int o3 = orientation(x3, y3, x4, y4, x1, y1);
-//     int o4 = orientation(x3, y3, x4, y4, x2, y2);
-
-//     // General case
-//     if (o1 != o2 && o3 != o4) return true;
-
-//     // Special Cases
-//     // if (o1 == 0 && onSegment(x1, y1, x2, y2, x3, y3)) return true;
-//     // if (o2 == 0 && onSegment(x1, y1, x2, y2, x4, y4)) return true;
-//     // if (o3 == 0 && onSegment(x3, y3, x4, y4, x1, y1)) return true;
-//     // if (o4 == 0 && onSegment(x3, y3, x4, y4, x2, y2)) return true;
-
-//     return false;
-// }
-
-
-
 App & App::getInstance()
 {
     static App instance;
@@ -160,11 +129,6 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
                 }
             }
         }
-        
-        // std::cout<<"---"<<std::endl;
-
-        
-        // bresenhamLine(pixel->path, x0, y0, x1, y1);
         pixel->dirty = true;
     }
     else if(app.showPreview && app.currentMode == ELLIPSE_MODE){
@@ -421,15 +385,7 @@ void App::processKeyInput(GLFWwindow * window)
 
 void App::bresenhamLine(std::vector<Pixel::Vertex> & path, int x0, int y0, int x1, int y1)
 {
-    // int x1_temp = x1, y1_temp = y1;
-    // if(x1 < x0){
-    //     x1 = 2*x0 - x1;
-    // }
-    // if(y1 < y0){
-    //     y1 = 2*y0 - y1;
-    // }
-
-    
+   
     int dx = std::abs(x1 - x0);
     int dy = std::abs(y1 - y0);
     int p = 2 * dy - dx;
@@ -650,15 +606,15 @@ void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, dou
     double slopeAdd1 = 6*a3*x+3*a3+2*a2;
     double slopeAdd2 = 6*a3;
     double slopeAtEnd = abs(3*a3*kWindowWidth*kWindowWidth + 2*a2*kWindowWidth + a1);
-    double steps = 1.0/10;
+    double incr = 1.0/10;
     int _y;
     int _py;
-    std::cout<< "x = "<<x<<std::endl;
+    // std::cout<< "x = "<<x<<std::endl;
     while(x <= x1_1 &&x<=kWindowWidth){
         _py = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0-1;
-        for(double i = 0; i<1; i = i+steps){
+        for(double i = 0; i<1; i = i+incr){
             _y = int(a3*(x+i)*(x+i)*(x+i) + a2* (x+i)*(x+i) + a1*(x+i) + a0 + 0.5);
-            // std::cout<<"-- x = "<<x+i<< ", y = "<< _y << ", _py = "<<_py<<", steps: "<<steps<<std::endl;
+            // std::cout<<"-- x = "<<x+i<< ", y = "<< _y << ", _py = "<<_py<<", incr: "<<incr<<std::endl;
             if(_py!=_y){
                 
                 if(reverseSign)path.emplace_back(x, -_y, 1.0f, 1.0f, 1.0f);
@@ -672,7 +628,7 @@ void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, dou
         }
         x++;
     }
-    std::cout<< "x = "<<x<<std::endl;
+    // std::cout<< "x = "<<x<<std::endl;
     double _ty = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0;
     int y = _ty;
     double p1 = _ty - y - 0.5;
@@ -687,7 +643,7 @@ void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, dou
         else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
         x++;
     }
-    std::cout<< "x = "<<x<<std::endl;
+    // std::cout<< "x = "<<x<<std::endl;
     _ty = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0;
     y = (_ty+0.5);
     p1 = _ty - int(_ty) - 0.5;
@@ -702,10 +658,10 @@ void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, dou
         x++;
     }
 
-    std::cout<< "x = "<<x<<std::endl;
+    // std::cout<< "x = "<<x<<std::endl;
     while(x<=xminus1_2 && x<=kWindowWidth){
         _py = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0-0.5;;
-        for(double i = 0; i<1; i = i+steps){
+        for(double i = 0; i<1; i = i+incr){
             _y = int(a3*(x+i)*(x+i)*(x+i) + a2* (x+i)*(x+i) + a1*(x+i) + a0 + 0.5);
             if(_py!=_y){
                 // std::cout<<"x = "<<x<< ", y = "<< _y <<std::endl;
@@ -718,7 +674,7 @@ void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, dou
                 _py--;
             }
         }
-        // for(double i = 0; i<1; i = i+steps){
+        // for(double i = 0; i<1; i = i+incr){
         //     _y = int(a3*(x+i)*(x+i)*(x+i) + a2* (x+i)*(x+i) + a1*(x+i) + a0 + 0.5);
         //     if(path.back().position.x!=x){
         //         if(reverseSign)path.emplace_back(x, -_y, 1.0f, 1.0f, 1.0f);
@@ -734,7 +690,7 @@ void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, dou
         // x++;
         x++;
     }
-    std::cout<< "x = "<<x<<std::endl;
+    // std::cout<< "x = "<<x<<std::endl;
     _ty = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0;
     y = (_ty+0.5);
     p1 = _ty - int(_ty) - 0.5;
@@ -750,9 +706,9 @@ void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, dou
     }
 
     _ty = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0;
-    y = _ty;
+    y = (_ty+0.5);
     p1 = _ty - y - 0.5;
-    std::cout<< "x = "<<x<<std::endl;
+    // std::cout<< "x = "<<x<<std::endl;
     while(x <= x1_2 && x<=kWindowWidth){
         if(p1>0){
             y++;
@@ -763,11 +719,11 @@ void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, dou
         else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
         x++;
     }
-    std::cout<< "x = "<<x<<std::endl;
+    // std::cout<< "x = "<<x<<std::endl;
     _py = a3*(x)*(x)*(x) + a2* (x)*(x) + a1*(x) + a0-0.5;
     while(x<= kWindowWidth){
         
-        for(double i = 0; i<1; i = i+steps){
+        for(double i = 0; i<1; i = i+incr){
             _y = int(a3*(x+i)*(x+i)*(x+i) + a2* (x+i)*(x+i) + a1*(x+i) + a0 + 0.5);
             if(_py!=_y){
                 // std::cout<<"x = "<<x<< ", y = "<< _y <<std::endl;
@@ -781,20 +737,7 @@ void App::drawCubic(std::vector<Pixel::Vertex> & path, double a3, double a2, dou
             }
         }
         x++;
-        // for(double i = 0; i<1; i = i+steps){
-        //     _y = int(a3*(x+i)*(x+i)*(x+i) + a2* (x+i)*(x+i) + a1*(x+i) + a0 + 0.5);
-        //     if(path.back().position.x!=x){
-        //         if(reverseSign)path.emplace_back(x, -_y, 1.0f, 1.0f, 1.0f);
-        //         else path.emplace_back(x, _y, 1.0f, 1.0f, 1.0f);
-        //     }
-        //     if(path.back().position.x==x && path.back().position.y!=_y){
-        //         for(int tempy = path.back().position.y; tempy<=_y; tempy++){
-        //             if(reverseSign)path.emplace_back(x, -tempy, 1.0f, 1.0f, 1.0f);
-        //             else path.emplace_back(x, tempy, 1.0f, 1.0f, 1.0f);
-        //         }
-        //     }
-        // }
-        // x++;
+        
     }
 }
 
@@ -806,11 +749,14 @@ void App::drawQuadratic(std::vector<Pixel::Vertex> & path, double a2, double a1,
         a0 = -a0;
         reverseSign = true;
     }
+    int x = 0;
+    int y = int(a0 + 0.5);
     
-    int x = (-1-a1)/(2*a2);
+    
+    x = (-1-a1)/(2*a2);
     double y_ = a2*x*x + a1*x + a0;
     double p1 = y_ - int(y_) - 0.5;
-    int y = int(y_);
+    y = int(y_);
     double slope = 2*a2*x + a1;
     double slopeAdd = 2*a2;
     
@@ -846,85 +792,32 @@ void App::drawQuadratic(std::vector<Pixel::Vertex> & path, double a2, double a1,
     }
 
     double slopeAtEnd = 2*a2*(x+1) + a1;
-    double steps = 1/(slopeAtEnd);
+    double incr = 1/(slopeAtEnd);
 
-    // while(x < kWindowWidth || 2*mid_x - x >=0){
-    //     for(double i = 0; i<1; i = i+steps){
-    //         y = int(a2*(x+i)*(x+i) + a1* (x+i) + a0 + 0.5);
+    while(x < kWindowWidth || 2*mid_x - x >=0){
+        for(double i = 0; i<1; i = i+incr){
+            y = int(a2*(x+i)*(x+i) + a1* (x+i) + a0 + 0.5);
             
-    //         if(x<kWindowWidth){
-    //             if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
-    //             else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
-    //         }
-    //         if(2*mid_x - x >=0){
-    //             if(reverseSign)path.emplace_back(2*mid_x - x, -y, 1.0f, 1.0f, 1.0f);
-    //             else path.emplace_back(2*mid_x - x, y, 1.0f, 1.0f, 1.0f);
-    //         }
-    //     }
-    //     // if(x<kWindowWidth)path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
-    //     // if(2*mid_x - x >=0)path.emplace_back(2*mid_x - x, y, 1.0f, 1.0f, 1.0f);
-    //     x++;
-    //     slopeAtEnd += 2*a2;
-    //     steps = 1/slopeAtEnd;
-    // }
+            if(x<kWindowWidth){
+                if(reverseSign)path.emplace_back(x, -y, 1.0f, 1.0f, 1.0f);
+                else path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+            }
+            if(2*mid_x - x >=0){
+                if(reverseSign)path.emplace_back(2*mid_x - x, -y, 1.0f, 1.0f, 1.0f);
+                else path.emplace_back(2*mid_x - x, y, 1.0f, 1.0f, 1.0f);
+            }
+        }
+        // if(x<kWindowWidth)path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+        // if(2*mid_x - x >=0)path.emplace_back(2*mid_x - x, y, 1.0f, 1.0f, 1.0f);
+        x++;
+        slopeAtEnd += 2*a2;
+        incr = 1/slopeAtEnd;
+    }
 
-
-    // float d = a2 + a1 + a0 - 1;
-    // int mid_x = -a1/(2*a2);
-    // y_ = a2*x*x + a1*x + a0;
-    // p1 = y_ - int(y_) - 0.5;
-    // y = int(y_);
-
-    // int x1 = y;
-    // int y1 = x;
-    // int mid_y = mid_x;
-
-    // double d = a2/4 + a1/2;
-    // p1 = (a2*y1*y1 + a1*y1 + a0) - int(a2*y1*y1 + a1*y1 + a0) -0.5;
-
-    
-
-    // while (x1 < kWindowHeight && (y1<kWindowWidth || (2*mid_y - y1) > 0)) {
-        
-    //     if (p1 > 0) {
-    //         p1 -=1;
-    //         y1++;
-    //     }
-    //     p1 += a2*y1 + d;
-    //     x1++;
-    //     std::cout<<"x = "<<x1<< " ; y = "<<y1<<"; p1 = "<<p1<<std::endl;
-    //     path.emplace_back(y1, x1, 1.0f, 1.0f, 1.0f);
-    //     path.emplace_back(2*mid_y - y1, x1, 1.0f, 1.0f, 1.0f);
-    // }
-
-
-    // int mid_x = (-a1)/(2*a2);
-    
-
-    // while(x<kWindowWidth || (2*mid_x-x)>=0){
-    //     if(p1>0){
-    //         p1-=1;
-    //         x+=1;
-    //     }
-    //     p1+=a2/4+a2*x+a1/2;
-    //     path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
-    //     path.emplace_back((2*mid_x-x), y, 1.0f, 1.0f, 1.0f);
-    //     // std::cout<<"x = "<<x<< " ; y = "<<y<<"; p1 = "<<p1<<std::endl;
-    //     y++;
-    // }
 }
 
 void App::bresenhamLineRed(std::vector<Pixel::Vertex> & path, int x0, int y0, int x1, int y1)
-{
-    // int x1_temp = x1, y1_temp = y1;
-    // if(x1 < x0){
-    //     x1 = 2*x0 - x1;
-    // }
-    // if(y1 < y0){
-    //     y1 = 2*y0 - y1;
-    // }
-
-    
+{   
     int dx = std::abs(x1 - x0);
     int dy = std::abs(y1 - y0);
     int p = 2 * dy - dx;
