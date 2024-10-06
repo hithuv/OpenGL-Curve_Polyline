@@ -212,7 +212,13 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
         auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
         pixel->path.clear();
         if(app.a3 == 0){
-            drawQuadratic(pixel->path, app.a2, app.a1, app.a0);
+            if(app.a2 == 0){
+                auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
+                pixel->path.clear();
+
+                bresenhamLine(pixel->path, 0, int(app.a0+0.5), kWindowWidth, int(app.a1*kWindowWidth+app.a0+0.5));
+            }
+            else drawQuadratic(pixel->path, app.a2, app.a1, app.a0);
         }
         else {
             drawCubic(pixel->path, app.a3, app.a2, app.a1, app.a0);
@@ -238,10 +244,9 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
         }
     }
     if(key == GLFW_KEY_F && app.currentMode == POLYLINE_MODE && app.completePolygon){
+        auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
+        pixel->path.clear();
         if(app.checkintersectingLines == true){
-
-            auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
-            pixel->path.clear();
             int polyLineSize = app.polylineCorners.size();
 
             for(int i = 0; i<polyLineSize; i++){
@@ -249,56 +254,11 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
                 if(app.intersectingLines[i] == 1)bresenhamLineRed(pixel->path, app.polylineCorners[i][0].x, app.polylineCorners[i][0].y, app.polylineCorners[i][1].x, app.polylineCorners[i][1].y);
                 else bresenhamLine(pixel->path, app.polylineCorners[i][0].x, app.polylineCorners[i][0].y, app.polylineCorners[i][1].x, app.polylineCorners[i][1].y);
             }
-
-            pixel->dirty = true;
-            
         }
         else{
-            auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
             scanlineFill(pixel->path, app.polylineCorners);
-            pixel->dirty = true;
-            // if (app.polylineCorners.empty()) return;
-
-            // // Find y range
-            // int ymin = kWindowHeight, ymax = 0;
-            // for (const auto& segment : app.polylineCorners) {
-            //     for (const auto& point : segment) {
-            //         ymin = std::min(ymin, static_cast<int>(point.y));
-            //         ymax = std::max(ymax, static_cast<int>(point.y));
-            //     }
-            // }
-
-            // // Scan line algorithm
-            // for (int y = ymin; y <= ymax; ++y) {
-            //     std::vector<int> intersections;
-
-            //     // Find intersections with all edges
-            //     for (const auto& segment : app.polylineCorners) {
-            //         int y1 = static_cast<int>(segment[0].y);
-            //         int y2 = static_cast<int>(segment[1].y);
-                    
-            //         if ((y1 <= y && y < y2) || (y2 <= y && y < y1)) {
-            //             int x1 = static_cast<int>(segment[0].x);
-            //             int x2 = static_cast<int>(segment[1].x);
-            //             int x = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
-            //             intersections.push_back(x);
-            //         }
-            //     }
-
-            //     // Sort intersections
-            //     std::sort(intersections.begin(), intersections.end());
-
-            //     // Fill between pairs of intersections
-            //     for (size_t i = 0; i < intersections.size(); i += 2) {
-            //         if (i + 1 < intersections.size()) {
-            //             for (int x = intersections[i]; x <= intersections[i+1]; ++x) {
-            //                 pixel->path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
-            //             }
-            //         }
-            //     }
-            // }
         }
-        
+        pixel->dirty = true;
     }
 }
 
