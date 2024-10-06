@@ -55,6 +55,8 @@ private:
 
     static void bresenhamLineRed(std::vector<Pixel::Vertex> & path, int x0, int y0, int x1, int y1);
 
+    static void scanlineFill(std::vector<Pixel::Vertex> & path, const std::vector<std::vector<glm::dvec2>>& polylineCorners);
+
     App();
 
     void render();

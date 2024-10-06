@@ -289,6 +289,51 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
             pixel->dirty = true;
             
         }
+        else{
+            auto pixel = dynamic_cast<Pixel *>(app.shapes.front().get());
+            scanlineFill(pixel->path, app.polylineCorners);
+            pixel->dirty = true;
+            // if (app.polylineCorners.empty()) return;
+
+            // // Find y range
+            // int ymin = kWindowHeight, ymax = 0;
+            // for (const auto& segment : app.polylineCorners) {
+            //     for (const auto& point : segment) {
+            //         ymin = std::min(ymin, static_cast<int>(point.y));
+            //         ymax = std::max(ymax, static_cast<int>(point.y));
+            //     }
+            // }
+
+            // // Scan line algorithm
+            // for (int y = ymin; y <= ymax; ++y) {
+            //     std::vector<int> intersections;
+
+            //     // Find intersections with all edges
+            //     for (const auto& segment : app.polylineCorners) {
+            //         int y1 = static_cast<int>(segment[0].y);
+            //         int y2 = static_cast<int>(segment[1].y);
+                    
+            //         if ((y1 <= y && y < y2) || (y2 <= y && y < y1)) {
+            //             int x1 = static_cast<int>(segment[0].x);
+            //             int x2 = static_cast<int>(segment[1].x);
+            //             int x = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
+            //             intersections.push_back(x);
+            //         }
+            //     }
+
+            //     // Sort intersections
+            //     std::sort(intersections.begin(), intersections.end());
+
+            //     // Fill between pairs of intersections
+            //     for (size_t i = 0; i < intersections.size(); i += 2) {
+            //         if (i + 1 < intersections.size()) {
+            //             for (int x = intersections[i]; x <= intersections[i+1]; ++x) {
+            //                 pixel->path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+            //             }
+            //         }
+            //     }
+            // }
+        }
         
     }
 }
@@ -959,5 +1004,49 @@ void App::bresenhamLineRed(std::vector<Pixel::Vertex> & path, int x0, int y0, in
     }
     
 }
+
+void App::scanlineFill(std::vector<Pixel::Vertex> & path, const std::vector<std::vector<glm::dvec2>>& polylineCorners) {
+    if (polylineCorners.empty()) return;
+
+    // Find y range
+    int ymin = kWindowHeight, ymax = 0;
+    for (const auto& segment : polylineCorners) {
+        for (const auto& point : segment) {
+            ymin = std::min(ymin, static_cast<int>(point.y));
+            ymax = std::max(ymax, static_cast<int>(point.y));
+        }
+    }
+
+    // Scan line algorithm
+    for (int y = ymin; y <= ymax; ++y) {
+        std::vector<int> intersections;
+
+        // Find intersections with all edges
+        for (const auto& segment : polylineCorners) {
+            int y1 = static_cast<int>(segment[0].y);
+            int y2 = static_cast<int>(segment[1].y);
+            
+            if ((y1 <= y && y < y2) || (y2 <= y && y < y1)) {
+                int x1 = static_cast<int>(segment[0].x);
+                int x2 = static_cast<int>(segment[1].x);
+                int x = x1 + (y - y1) * (x2 - x1) / (y2 - y1);
+                intersections.push_back(x);
+            }
+        }
+
+        // Sort intersections
+        std::sort(intersections.begin(), intersections.end());
+
+        // Fill between pairs of intersections
+        for (size_t i = 0; i < intersections.size(); i += 2) {
+            if (i + 1 < intersections.size()) {
+                for (int x = intersections[i]; x <= intersections[i+1]; ++x) {
+                    path.emplace_back(x, y, 1.0f, 1.0f, 1.0f);
+                }
+            }
+        }
+    }
+}
+
 
 
