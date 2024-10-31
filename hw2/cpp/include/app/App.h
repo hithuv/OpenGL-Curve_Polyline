@@ -8,6 +8,9 @@
 
 #include "app/Window.h"
 
+// #include <glad/glad.h>
+// #include <GLFW/glfw3.h>
+
 
 class Shader;
 class Renderable;
@@ -32,15 +35,36 @@ private:
 
     // from CMakeLists.txt, compile definition
     static constexpr char kWindowName[] {WINDOW_NAME};
-    static constexpr int kWindowWidth {1000};
-    static constexpr int kWindowHeight {1000};
+    static constexpr int kWindowWidth {600};
+    static constexpr int kWindowHeight {600};
 
-private:
     App();
 
     void render();
 
+    //Sri
+    bool curveFinalized {false};
+    glm::vec2 currentMousePos;
+
+    void renderBezierPreview();
+    void renderControlPoints(); 
+    // void renderFinalBezierCurve();
+    
+    //ddd
+    std::unique_ptr<Shader> pBezierShader {nullptr};
+    std::vector<glm::vec2> controlPoints;
+    bool inBezierMode {false};
+    int clickCount {0};
+
+    void renderBezierCurve();
+    void addControlPoint(const glm::vec2& point);
+    glm::vec2 evaluateBezier(float t);
+    // void renderControlPointsAndCursor();
+    //E-Sri
+
     // Shaders.
+
+    
     // In principle, a shader could be reused across multiple objects.
     // Thus, these shaders are not designed as members of object classes.
     std::unique_ptr<Shader> pTriangleShader {nullptr};
