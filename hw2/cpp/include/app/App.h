@@ -35,12 +35,14 @@ private:
 
     // from CMakeLists.txt, compile definition
     static constexpr char kWindowName[] {WINDOW_NAME};
-    static constexpr int kWindowWidth {600};
-    static constexpr int kWindowHeight {600};
+    static constexpr int kWindowWidth {800};
+    static constexpr int kWindowHeight {800};
 
     App();
 
     void render();
+
+    void renderSpline();
 
     //Sri
     bool curveFinalized {false};
@@ -53,13 +55,14 @@ private:
     //ddd
     std::unique_ptr<Shader> pBezierShader {nullptr};
     std::vector<glm::vec2> controlPoints;
+    std::vector<std::vector<glm::vec2>> splineSegments;
     bool inBezierMode {false};
-    int clickCount {0};
 
     void renderBezierCurve();
     void addControlPoint(const glm::vec2& point);
-    glm::vec2 evaluateBezier(float t);
-    // void renderControlPointsAndCursor();
+    void ensureC2Continuity();
+    glm::vec2 evaluateBezier(const std::vector<glm::vec2> &controlPoints, float t);
+    std::vector<glm::vec2> calculateNewSegmentPoints(const std::vector<glm::vec2>& prevSegment, const glm::vec2& newPoint);
     //E-Sri
 
     // Shaders.
@@ -89,7 +92,15 @@ private:
     // (while lastMouseLeftClickPos, if there is one, remains the original value).
     glm::dvec2 lastMouseLeftClickPos {0.0, 0.0};
     glm::dvec2 lastMouseLeftPressPos {0.0, 0.0};
+    void selectControlPoint();
+    void dragControlPoint();
+    void insertControlPoint();
+    void deleteControlPoint();
+    void saveSplineToFile(const std::string &filename);
+    void loadSplineFromFile(const std::string &filename);
+    int getTotalControlPoints() const;
+    int selectedPointIndex = -1;
+    int selectedSegmentIndex = -1;
 };
-
 
 #endif  // APP_H
