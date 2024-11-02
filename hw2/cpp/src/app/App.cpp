@@ -43,7 +43,7 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
     app.currentMousePos = app.mousePos;
 
     if (app.selectedPointIndex != -1 && app.selectedSegmentIndex != -1) {
-        app.dragControlPoint();
+        app.dragBezierControlPoint();
     }
 
 }
@@ -63,43 +63,34 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
     if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
         app.curveFinalized = false;
         app.inBezierMode = true;
+        app.inCatmullRomMode = false;
         std::cout << "inBezierMode = true" << std::endl;
         app.splineSegments.clear();
-    } else if (key == GLFW_KEY_INSERT && action == GLFW_PRESS) {
-        app.insertControlPoint();
-    } else if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
-        app.deleteControlPoint();
-    } else if (key == GLFW_KEY_S && action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
-        app.saveSplineToFile("config.txt");
-    } else if (key == GLFW_KEY_L && action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
-        app.loadSplineFromFile("config.txt");
+    }
+    else if(key == GLFW_KEY_3 && action == GLFW_PRESS){
+        app.curveFinalized = false;
+        app.inBezierMode = false;
+        app.inCatmullRomMode = true;
+        std::cout << "inCatmullRomMode = true" << std::endl;
+        app.splineSegments.clear();
+    }
+    else if(app.inBezierMode){
+        if (key == GLFW_KEY_INSERT && action == GLFW_PRESS) {
+            app.insertControlPoint();
+        } else if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
+            app.deleteControlPoint();
+        } else if (key == GLFW_KEY_S && action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
+            std::cout<<"Saving file"<<std::endl;
+            app.saveSplineToFile("./etc/config.txt");
+        } else if (key == GLFW_KEY_L && action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
+            app.loadSplineFromFile("./etc/config.txt");
+        }
+    }
+    else if(app.inCatmullRomMode){
+        std::cout<<"HellofromRom \n";
     }
 
 }
-
-// void App::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
-//     App& app = *reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
-//     if (app.inBezierMode) {
-//         if (app.curveFinalized == false && action == GLFW_PRESS) {
-//             if (button == GLFW_MOUSE_BUTTON_LEFT) {
-//                 if (app.splineSegments.empty() || app.splineSegments.back().size() == 4) {
-//                     app.addControlPoint(app.mousePos);
-//                 } else if (app.splineSegments.back().size() == 3) {
-//                     app.addControlPoint(app.mousePos);
-//                     app.curveFinalized = true;
-//                 }
-//             }
-//         } else if (app.curveFinalized && button == GLFW_MOUSE_BUTTON_LEFT) {
-//             if (action == GLFW_PRESS) {
-//                 app.selectControlPoint();
-//             } else if (action == GLFW_RELEASE) {
-//                 app.selectedPointIndex = -1;
-//                 app.selectedSegmentIndex = -1;
-//             }
-//         }
-//     }
-// }
-
 
 void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int mods)
 {
@@ -108,10 +99,10 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
     if (app.inBezierMode) {
         if(app.curveFinalized==false && action == GLFW_PRESS){
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                app.addControlPoint(app.mousePos);
+                app.addBezierControlPoint(app.mousePos);
             } else if (button == GLFW_MOUSE_BUTTON_RIGHT && app.splineSegments.size() > 0) {
                 app.curveFinalized = true;
-                app.addControlPoint(app.mousePos);
+                app.addBezierControlPoint(app.mousePos);
                 
             }
         }
@@ -171,6 +162,8 @@ App::App() : Window(kWindowWidth, kWindowHeight, kWindowName, nullptr, nullptr)
     pBezierShader = std::make_unique<Shader>("src/shader/bezier.vert.glsl",
                                              "src/shader/bezier.frag.glsl");
 
+    
+
     //E-Sri
 }
 
@@ -179,12 +172,13 @@ void App::render()
 {
     auto t = static_cast<float>(timeElapsedSinceLastFrame);
 
-    pBezierShader->use();
-    pBezierShader->setFloat("windowWidth", static_cast<float>(kWindowWidth));
-    pBezierShader->setFloat("windowHeight", static_cast<float>(kWindowHeight));
+    
 
 
     if (inBezierMode) {
+        pBezierShader->use();
+        pBezierShader->setFloat("windowWidth", static_cast<float>(kWindowWidth));
+        pBezierShader->setFloat("windowHeight", static_cast<float>(kWindowHeight));
         renderSpline();
         renderControlPoints();
     }
@@ -219,19 +213,6 @@ void App::renderSpline() {
         }
     }
 
-    // std::vector<glm::vec2> allCurvePoints;
-    // for (auto& segment : splineSegments) {
-    //     if(segment.size()<3)continue;
-    //     bool pop_last = false;
-    //     if(segment.size() == 3){
-    //         segment.push_back(mousePos);
-    //         pop_last = true;
-    //     }
-    //     for (float t = 0; t <= 1; t += 0.01f) {
-    //         allCurvePoints.push_back(evaluateBezier(segment, t));
-    //     }
-    //     if(pop_last)segment.pop_back();
-    // }
 
     GLuint VAO, VBO;
     glGenVertexArrays(1, &VAO);
@@ -275,7 +256,7 @@ void App::renderControlPoints() {
     glDeleteBuffers(1, &VBO);
 }
 
-void App::addControlPoint(const glm::vec2& point) {
+void App::addBezierControlPoint(const glm::vec2& point) {
 
     if(splineSegments.size() == 0){
         splineSegments.push_back({});
@@ -291,7 +272,7 @@ void App::addControlPoint(const glm::vec2& point) {
         auto& prevSegment = splineSegments.back();
         glm::vec2 P0 = prevSegment[0], P1 = prevSegment[1], P2 = prevSegment[2], P3 = prevSegment[3];
         glm::vec2 P4 = P3 + (P3 - P2);
-        glm::vec2 P5 = 2.0f * P4 - P3 + (P2 - P1);
+        glm::vec2 P5 = P1 + 2.0f * P4 - 2.0f * P2;
         splineSegments.push_back({P3, P4, P5});
         std::cout<<"point are: p0 = "<<P0.x<<", "<<P0.y<<"; p1 = "<<P1.x<<", "<<P1.y<<";  p2 = "<<P2.x <<", "<<P2.y<<std::endl;
         std::cout<<"point are: p3 = "<<P3.x<<", "<<P3.y<<"; p4 = "<<P4.x<<", "<<P4.y<<";  p5 = "<<P5.x <<", "<<P5.y<<std::endl;
@@ -333,62 +314,219 @@ void App::selectControlPoint() {
     }
 }
 
-void App::dragControlPoint() {
-    splineSegments[selectedSegmentIndex][selectedPointIndex] = currentMousePos;
-    // ensureC2Continuity();
+void App::dragBezierControlPoint() {
+    if (selectedSegmentIndex == -1 || selectedPointIndex == -1) return;
+
+    glm::vec2 oldPosition = splineSegments[selectedSegmentIndex][selectedPointIndex];
+    glm::vec2 newPosition = currentMousePos;
+    glm::vec2 delta = newPosition - oldPosition;
+    // std::cout<<selectedSegmentIndex<< " "<<selectedPointIndex<<std::endl;
+
+    splineSegments[selectedSegmentIndex][selectedPointIndex] = newPosition;
+    if(selectedSegmentIndex > 0 && selectedSegmentIndex<splineSegments.size()-1 && selectedPointIndex == 3){
+        splineSegments[selectedSegmentIndex+1][0] = newPosition;
+        selectedSegmentIndex++;
+        selectedPointIndex = 0;
+    }
+
+    // Update adjacent control points to maintain C2 continuity
+    if (splineSegments.size() > 1) {
+        if(selectedSegmentIndex == 0){    
+            for (size_t i = 1; i < splineSegments.size(); ++i) {
+
+                glm::vec2 P1 = splineSegments[i-1][1];
+                glm::vec2 P2 = splineSegments[i-1][2];
+                glm::vec2 P3 = splineSegments[i-1][3];
+
+                glm::vec2 P4 = P3 + (P3 - P2);
+                glm::vec2 P5 = P1 + 2.0f * P4 - 2.0f * P2;
+                
+                splineSegments[i][0] = P3;
+                splineSegments[i][1] = P4;
+                splineSegments[i][2] = P5;
+
+                
+            }
+        }else {
+            // Middle segments
+            if (selectedPointIndex == 0) {
+                for(int i = selectedSegmentIndex; i<splineSegments.size(); ++i){
+                    glm::vec2 P1 = splineSegments[i-1][1];
+                    glm::vec2 P2 = splineSegments[i-1][2];
+                    glm::vec2 P3 = splineSegments[i][0];
+                    splineSegments[i-1][3] = P3;
+
+                    glm::vec2 P4 = P3 + (P3 - P2);
+                    glm::vec2 P5 = P1 + 2.0f * P4 - 2.0f * P2;
+                    
+                    splineSegments[i][0] = P3;
+                    splineSegments[i][1] = P4;
+                    splineSegments[i][2] = P5;
+                }
+                
+            } else if (selectedPointIndex == 1) {
+                // P1 of middle segment moved (affects previous segment)
+                glm::vec2 P2 = splineSegments[selectedSegmentIndex - 1][2];
+                glm::vec2 P1 = splineSegments[selectedSegmentIndex - 1][1]; 
+                glm::vec2 P4 = splineSegments[selectedSegmentIndex][1];
+
+                splineSegments[selectedSegmentIndex - 1][3] = 0.5f*(P4+splineSegments[selectedSegmentIndex - 1][2]);
+                splineSegments[selectedSegmentIndex][0] = splineSegments[selectedSegmentIndex - 1][3];
+                splineSegments[selectedSegmentIndex][2] = P1 + 2.0f * P4 - 2.0f * P2;
+
+                for(int i = selectedSegmentIndex+1; i<splineSegments.size(); ++i){
+                    glm::vec2 P1 = splineSegments[i-1][1];
+                    glm::vec2 P2 = splineSegments[i-1][2];
+                    glm::vec2 P3 = splineSegments[i][0];
+                    splineSegments[i-1][3] = P3;
+
+                    glm::vec2 P4 = P3 + (P3 - P2);
+                    glm::vec2 P5 = P1 + 2.0f * P4 - 2.0f * P2;
+                    
+                    splineSegments[i][0] = P3;
+                    splineSegments[i][1] = P4;
+                    splineSegments[i][2] = P5;
+                }
+                
+            } else if (selectedPointIndex == 2) {
+                glm::vec2 P2 = splineSegments[selectedSegmentIndex - 1][2];
+                glm::vec2 P1 = splineSegments[selectedSegmentIndex - 1][1]; 
+                glm::vec2 P5 = splineSegments[selectedSegmentIndex][2]; 
+                splineSegments[selectedSegmentIndex][1] = 0.5f*(P5 + 2.0f*P2 - P1);
+                glm::vec2 P4 = splineSegments[selectedSegmentIndex][1];
+                splineSegments[selectedSegmentIndex - 1][3] = 0.5f*(P4+splineSegments[selectedSegmentIndex - 1][2]);
+                splineSegments[selectedSegmentIndex][0] = splineSegments[selectedSegmentIndex - 1][3];
+                for(int i = selectedSegmentIndex+1; i<splineSegments.size(); ++i){
+                    glm::vec2 P1 = splineSegments[i-1][1];
+                    glm::vec2 P2 = splineSegments[i-1][2];
+                    glm::vec2 P3 = splineSegments[i][0];
+                    splineSegments[i-1][3] = P3;
+
+                    glm::vec2 P4 = P3 + (P3 - P2);
+                    glm::vec2 P5 = P1 + 2.0f * P4 - 2.0f * P2;
+                    
+                    splineSegments[i][0] = P3;
+                    splineSegments[i][1] = P4;
+                    splineSegments[i][2] = P5;
+                }
+                // P2 of middle segment moved (affects next segment)
+                // splineSegments[selectedSegmentIndex + 1][0] = splineSegments[selectedSegmentIndex][3];
+                // splineSegments[selectedSegmentIndex + 1][1] = 2.0f * splineSegments[selectedSegmentIndex + 1][0] - newPosition;
+            } else if (selectedPointIndex == 3) {
+                // P3 of middle segment moved (affects next segment)
+                for(int i = selectedSegmentIndex+1; i<splineSegments.size(); ++i){
+                    glm::vec2 P1 = splineSegments[i-1][1];
+                    glm::vec2 P2 = splineSegments[i-1][2];
+                    glm::vec2 P3 = splineSegments[i][0];
+                    splineSegments[i-1][3] = P3;
+
+                    glm::vec2 P4 = P3 + (P3 - P2);
+                    glm::vec2 P5 = P1 + 2.0f * P4 - 2.0f * P2;
+                    
+                    splineSegments[i][0] = P3;
+                    splineSegments[i][1] = P4;
+                    splineSegments[i][2] = P5;
+                }
+            }
+        }
+    }
 }
+
+
 
 void App::insertControlPoint() {
     if (selectedPointIndex != -1 && selectedSegmentIndex != -1) {
-        glm::vec2 newPoint = (splineSegments[selectedSegmentIndex][selectedPointIndex] + 
+        glm::vec2 newPoint = (splineSegments[selectedSegmentIndex][selectedPointIndex] +
                               splineSegments[selectedSegmentIndex][(selectedPointIndex + 1) % 4]) * 0.5f;
         splineSegments[selectedSegmentIndex].insert(splineSegments[selectedSegmentIndex].begin() + selectedPointIndex + 1, newPoint);
-        // ensureC2Continuity();
+
+        // Recalculate control points to maintain C2 continuity
+        if (splineSegments.size() > 1 && selectedSegmentIndex < splineSegments.size() - 1) {
+            auto& currSegment = splineSegments[selectedSegmentIndex];
+            auto& nextSegment = splineSegments[selectedSegmentIndex + 1];
+            nextSegment[1] = 2.0f * nextSegment[0] - currSegment[2];
+            nextSegment[2] = 2.0f * nextSegment[1] - nextSegment[0];
+        }
     }
 }
 
 void App::deleteControlPoint() {
     if (selectedPointIndex != -1 && selectedSegmentIndex != -1) {
         splineSegments[selectedSegmentIndex].erase(splineSegments[selectedSegmentIndex].begin() + selectedPointIndex);
-        // ensureC2Continuity();
+
+        // Recalculate control points to maintain C2 continuity
+        if (splineSegments.size() > 1 && selectedSegmentIndex < splineSegments.size() - 1) {
+            auto& currSegment = splineSegments[selectedSegmentIndex];
+            auto& nextSegment = splineSegments[selectedSegmentIndex + 1];
+            nextSegment[1] = 2.0f * nextSegment[0] - currSegment[2];
+            nextSegment[2] = 2.0f * nextSegment[1] - nextSegment[0];
+        }
     }
 }
+
 
 void App::saveSplineToFile(const std::string& filename) {
     std::ofstream file(filename);
     if (file.is_open()) {
         file << "2 2 " << getTotalControlPoints() << std::endl;
-        for (const auto& segment : splineSegments) {
-            for (const auto& point : segment) {
+        
+        // Write the first segment completely
+        if (!splineSegments.empty()) {
+            for (const auto& point : splineSegments[0]) {
                 file << point.x << " " << point.y << std::endl;
             }
+            
+            // For subsequent segments, only write the last 3 points
+            for (size_t i = 1; i < splineSegments.size(); ++i) {
+                for (size_t j = 1; j < splineSegments[i].size(); ++j) {
+                    file << splineSegments[i][j].x << " " << splineSegments[i][j].y << std::endl;
+                }
+            }
         }
-        file.close();
-    }
-}
-
-void App::loadSplineFromFile(const std::string& filename) {
-    std::ifstream file(filename);
-    if (file.is_open()) {
-        int dim, continuity, totalPoints;
-        file >> dim >> continuity >> totalPoints;
         
-        splineSegments.clear();
-        for (int i = 0; i < totalPoints; ++i) {
-            float x, y;
-            file >> x >> y;
-            addControlPoint(glm::vec2(x, y));
-        }
         file.close();
     }
 }
 
 int App::getTotalControlPoints() const {
-    int total = 0;
-    for (const auto& segment : splineSegments) {
-        total += segment.size();
+    if (splineSegments.empty()) return 0;
+    
+    // Count all points in the first segment
+    int total = splineSegments[0].size();
+    
+    // For subsequent segments, only count the last 3 points
+    for (size_t i = 1; i < splineSegments.size(); ++i) {
+        total += std::max(0, static_cast<int>(splineSegments[i].size()) - 1);
     }
+    
     return total;
+}
+
+
+void App::loadSplineFromFile(const std::string& filename) {
+    std::ifstream file(filename);
+    if (file.is_open()) {
+        curveFinalized = false;
+        int dim, continuity, totalPoints;
+        file >> dim >> continuity >> totalPoints;
+        
+        splineSegments.clear();
+        splineSegments.push_back({});
+        for (int i = 0; i < totalPoints-1; ++i) {
+            float x, y;
+            file >> x >> y;
+            splineSegments.back().push_back(glm::vec2(x,y));
+            if(splineSegments.back().size() == 4){
+                splineSegments.push_back({});
+                splineSegments.back().push_back(glm::vec2(x,y));
+            }
+        }
+        curveFinalized = true;
+        float x, y;
+        file >> x >> y;
+        splineSegments.back().push_back(glm::vec2(x,y));
+        file.close();
+    }
 }
 
 std::vector<glm::vec2> App::calculateNewSegmentPoints(const std::vector<glm::vec2>& prevSegment, const glm::vec2& newPoint) {

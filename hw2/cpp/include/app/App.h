@@ -54,12 +54,14 @@ private:
     
     //ddd
     std::unique_ptr<Shader> pBezierShader {nullptr};
+    std::unique_ptr<Shader> pBezierTesShader {nullptr};
     std::vector<glm::vec2> controlPoints;
     std::vector<std::vector<glm::vec2>> splineSegments;
     bool inBezierMode {false};
+    bool inCatmullRomMode {false};
 
     void renderBezierCurve();
-    void addControlPoint(const glm::vec2& point);
+    void addBezierControlPoint(const glm::vec2& point);
     void ensureC2Continuity();
     glm::vec2 evaluateBezier(const std::vector<glm::vec2> &controlPoints, float t);
     std::vector<glm::vec2> calculateNewSegmentPoints(const std::vector<glm::vec2>& prevSegment, const glm::vec2& newPoint);
@@ -93,12 +95,13 @@ private:
     glm::dvec2 lastMouseLeftClickPos {0.0, 0.0};
     glm::dvec2 lastMouseLeftPressPos {0.0, 0.0};
     void selectControlPoint();
-    void dragControlPoint();
+    void dragBezierControlPoint();
     void insertControlPoint();
     void deleteControlPoint();
     void saveSplineToFile(const std::string &filename);
     void loadSplineFromFile(const std::string &filename);
     int getTotalControlPoints() const;
+    uint tessellationShaderProgram;
     int selectedPointIndex = -1;
     int selectedSegmentIndex = -1;
 };
