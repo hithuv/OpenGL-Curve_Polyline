@@ -62,6 +62,7 @@ private:
 
     void renderBezierCurve();
     void addBezierControlPoint(const glm::vec2& point);
+    void addCatmullRomControlPoint(const glm::vec2& point);
     void ensureC2Continuity();
     glm::vec2 evaluateBezier(const std::vector<glm::vec2> &controlPoints, float t);
     std::vector<glm::vec2> calculateNewSegmentPoints(const std::vector<glm::vec2>& prevSegment, const glm::vec2& newPoint);
