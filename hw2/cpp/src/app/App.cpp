@@ -609,7 +609,7 @@ void App::loadSplineFromFile(const std::string& filename) {
     if (file.is_open()) {
         curveFinalized = false;
         int dim, continuity, totalPoints;
-        file >> dim >> continuity >> totalPoints;
+        file >> continuity >> dim >> totalPoints;
         
         if(dim == 2){
             if(!inBezierMode){
@@ -647,6 +647,7 @@ void App::loadSplineFromFile(const std::string& filename) {
                 float x, y;
                 file >> x >> y;
                 controlPoints.push_back(glm::vec2(x,y));
+                std::cout<<x<<" "<<y<<std::endl;
             }
             curveFinalized=true;
             buildBezierFromCatmullRom();
