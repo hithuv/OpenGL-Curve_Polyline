@@ -54,11 +54,12 @@ private:
     
     //ddd
     std::unique_ptr<Shader> pBezierShader {nullptr};
-    std::unique_ptr<Shader> pBezierTesShader {nullptr};
+    std::unique_ptr<Shader> pControlPointShader {nullptr};
     std::vector<glm::vec2> controlPoints;
     std::vector<std::vector<glm::vec2>> splineSegments;
     bool inBezierMode {false};
     bool inCatmullRomMode {false};
+    // bool mousePressed = false;
 
     void renderBezierCurve();
     void addBezierControlPoint(const glm::vec2& point);
@@ -87,6 +88,8 @@ private:
     double lastFrameTimeStamp {0.0};
 
     bool mousePressed {false};
+    bool insertPressed {false};
+    bool deletePressed {false};
     glm::dvec2 mousePos {0.0, 0.0};
 
     // Note lastMouseLeftClickPos is different from lastMouseLeftPressPos.

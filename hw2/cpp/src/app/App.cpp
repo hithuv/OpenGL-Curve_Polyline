@@ -42,10 +42,10 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
     app.mousePos.y = App::kWindowHeight - ypos;
     app.currentMousePos = app.mousePos;
 
-    if (app.inBezierMode && app.selectedPointIndex != -1 && app.selectedSegmentIndex != -1) {
+    if (app.inBezierMode && app.mousePressed && app.selectedPointIndex != -1 && app.selectedSegmentIndex != -1) {
         app.dragBezierControlPoint();
     }
-    else if(app.inCatmullRomMode && app.selectedPointIndex != -1){
+    else if(app.inCatmullRomMode && app.mousePressed && app.selectedPointIndex != -1){
         app.dragCatmullControlPoint();
     }
 
@@ -70,8 +70,12 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
         std::cout << "inBezierMode = true" << std::endl;
         app.splineSegments.clear();
         app.controlPoints.clear();
+        app.selectedSegmentIndex = -1;
+        app.selectedPointIndex = -1;
     }
     else if(key == GLFW_KEY_3 && action == GLFW_PRESS){
+        app.selectedSegmentIndex = -1;
+        app.selectedPointIndex = -1;
         app.curveFinalized = false;
         app.inBezierMode = false;
         app.inCatmullRomMode = true;
@@ -79,19 +83,27 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
         app.splineSegments.clear();
         app.controlPoints.clear();
     }
-    else if ((key == GLFW_KEY_INSERT || key == GLFW_KEY_I) && action == GLFW_PRESS) {
-        app.insertControlPoint();
-    } else if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
+    
+    else if(key == GLFW_KEY_DELETE || key == GLFW_KEY_BACKSPACE && app.selectedPointIndex != -1){
         app.deleteControlPoint();
-    } else if (key == GLFW_KEY_S && action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
+        app.selectedSegmentIndex = -1;
+        app.selectedPointIndex = -1;
+    }
+    else if (key == GLFW_KEY_S && action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
         std::cout<<"Saving file"<<std::endl;
         app.saveSplineToFile("./etc/config.txt");
     } else if (key == GLFW_KEY_L && action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
         app.loadSplineFromFile("./etc/config.txt");
     }
+    else if(key == GLFW_KEY_INSERT || key == GLFW_KEY_I){
+        if(action == GLFW_PRESS){
+            app.insertPressed = true;
+        }
+        else{
+            app.insertPressed = false;
+        }
+    }
     
-    
-
 }
 
 void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int mods)
@@ -110,18 +122,26 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
         }
         else if(app.curveFinalized && button == GLFW_MOUSE_BUTTON_LEFT){
             if(action == GLFW_PRESS){
-                app.selectControlPoint();
+                if(app.selectedPointIndex == -1)app.selectControlPoint();
+                else {
+                    app.selectedPointIndex = -1;
+                    app.selectedSegmentIndex = -1;
+                }
+                app.mousePressed = true;
             }
             else if(action == GLFW_RELEASE){
-                app.selectedPointIndex = -1;
-                app.selectedSegmentIndex = -1;
+                app.mousePressed = false;
+                
             }
-            
+
         }
     }
     if(app.inCatmullRomMode){
         if(app.curveFinalized==false && action == GLFW_PRESS){
-            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            if(action == GLFW_PRESS && app.selectedPointIndex != -1 && app.insertPressed){
+                app.insertControlPoint();
+            }
+            else if (button == GLFW_MOUSE_BUTTON_LEFT) {
                 // std::cout<<app.splineSegments.size()<<"click\n";
                 app.addCatmullRomControlPoint(app.mousePos);
             } else if (button == GLFW_MOUSE_BUTTON_RIGHT && app.splineSegments.size() > 0) {
@@ -130,12 +150,19 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
             }
         }
         else if(app.curveFinalized && button == GLFW_MOUSE_BUTTON_LEFT){
-            if(action == GLFW_PRESS){
-                app.selectControlPoint();
+            if(action == GLFW_PRESS && app.selectedPointIndex != -1 && app.insertPressed){
+                app.insertControlPoint();
+            }
+            else if(action == GLFW_PRESS){
+                if(app.selectedPointIndex == -1)app.selectControlPoint();
+                else {
+                    app.selectedPointIndex = -1;
+                    app.selectedSegmentIndex = -1;
+                }
+                app.mousePressed = true;
             }
             else if(action == GLFW_RELEASE){
-                app.selectedPointIndex = -1;
-                app.selectedSegmentIndex = -1;
+                app.mousePressed = false;
             }
             
         }
@@ -182,8 +209,17 @@ App::App() : Window(kWindowWidth, kWindowHeight, kWindowName, nullptr, nullptr)
     glPointSize(1.0f);
 
     //Sris
+    // pBezierShader = std::make_unique<Shader>("src/shader/bezier.vert.glsl",
+    //                                          "src/shader/bezier.frag.glsl");
+
     pBezierShader = std::make_unique<Shader>("src/shader/bezier.vert.glsl",
-                                             "src/shader/bezier.frag.glsl");
+                                         "src/shader/new_tcs.glsl",
+                                         "src/shader/new_tes.glsl",
+                                         "src/shader/bezier.frag.glsl");
+
+    pControlPointShader = std::make_unique<Shader>("src/shader/control_point.vert.glsl",
+                                               "src/shader/control_point.frag.glsl");
+
 
     
 
@@ -222,55 +258,57 @@ void App::renderSpline() {
     pBezierShader->use();
     pBezierShader->setFloat("windowWidth", static_cast<float>(kWindowWidth));
     pBezierShader->setFloat("windowHeight", static_cast<float>(kWindowHeight));
-    std::vector<glm::vec2> allCurvePoints;
+
+    // Set tessellation level
+    float tessLevel = 64.0f; // Adjust for desired smoothness
+    pBezierShader->setFloat("tessLevel", tessLevel);
+
     std::vector<glm::vec2> origcontrolPoints;
     std::vector<std::vector<glm::vec2>> origsplineSegments;
-    if(inCatmullRomMode){
+    if (inCatmullRomMode) {
         origcontrolPoints = controlPoints;
         origsplineSegments = splineSegments;
-        if(!curveFinalized && controlPoints.size()>2){
+        if (!curveFinalized && controlPoints.size() > 2) {
             addCatmullRomControlPoint(mousePos);
         }
     }
-    // std::cout<<splineSegments.size()<<"size\n";
-    for (size_t i = 0; i < splineSegments.size(); ++i) {
-        auto& segment = splineSegments[i];
-        std::vector<glm::vec2> currentSegment = segment;
-
-        if (segment.size() < 4) {
-            if (i == splineSegments.size() - 1) {
-                // For the last incomplete segment, use the mouse position as the last point
-                while (currentSegment.size() < 4) {
-                    currentSegment.push_back(mousePos);
-                }
-            } else {
-                // Skip incomplete segments that are not the last one
-                continue;
-            }
-        }
-
-        for (float t = 0; t <= 1; t += 0.01f) {
-            allCurvePoints.push_back(evaluateBezier(currentSegment, t));
-        }
-    }
-    if(inCatmullRomMode){
-        controlPoints = origcontrolPoints;
-        splineSegments = origsplineSegments;
-    }
-    
-
 
     GLuint VAO, VBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, allCurvePoints.size() * sizeof(glm::vec2), allCurvePoints.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)0);
-    glEnableVertexAttribArray(0);
 
-    pBezierShader->setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f)); // Blue color for the curve
-    glDrawArrays(GL_LINE_STRIP, 0, allCurvePoints.size());
+    for (size_t i = 0; i < splineSegments.size(); ++i) {
+        auto& segment = splineSegments[i];
+        std::vector<glm::vec2> currentSegment = segment;
+
+        if (segment.size() < 4) {
+            if (i == splineSegments.size() - 1) {
+                while (currentSegment.size() < 4) {
+                    currentSegment.push_back(mousePos);
+                }
+            } else {
+                continue;
+            }
+        }
+
+        // Send control points to GPU
+        glBufferData(GL_ARRAY_BUFFER, currentSegment.size() * sizeof(glm::vec2), currentSegment.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        pBezierShader->setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f)); // Blue color for the curve
+
+        // Draw using patches
+        glPatchParameteri(GL_PATCH_VERTICES, 4);
+        glDrawArrays(GL_PATCHES, 0, 4);
+    }
+
+    if (inCatmullRomMode) {
+        controlPoints = origcontrolPoints;
+        splineSegments = origsplineSegments;
+    }
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
@@ -280,16 +318,13 @@ void App::renderControlPoints() {
     if (inBezierMode && splineSegments.empty()) return;
 
     std::vector<glm::vec2> allControlPoints;
-    if(inBezierMode){
+    if(inBezierMode) {
         for (const auto& segment : splineSegments) {
-        allControlPoints.insert(allControlPoints.end(), segment.begin(), segment.end());
-    }
-    }
-    else if(inCatmullRomMode){
+            allControlPoints.insert(allControlPoints.end(), segment.begin(), segment.end());
+        }
+    } else if(inCatmullRomMode) {
         allControlPoints = controlPoints;
     }
-    // std::cout<<allControlPoints.size()<<"fds\n";
-    
 
     GLuint VAO, VBO;
     glGenVertexArrays(1, &VAO);
@@ -300,14 +335,37 @@ void App::renderControlPoints() {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)0);
     glEnableVertexAttribArray(0);
 
-    pBezierShader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Red color for control points
+    pControlPointShader->use();
+    pControlPointShader->setFloat("windowWidth", static_cast<float>(kWindowWidth));
+    pControlPointShader->setFloat("windowHeight", static_cast<float>(kWindowHeight));
+    pControlPointShader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Red color for control points
+
     glPointSize(9.0f);
     glDrawArrays(GL_POINTS, 0, allControlPoints.size());
+
+    if (inCatmullRomMode && selectedPointIndex != -1 && selectedPointIndex < allControlPoints.size()) {
+        pControlPointShader->setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f)); // White color
+        glDrawArrays(GL_POINTS, selectedPointIndex, 1);
+    }
+
+    if (inBezierMode && selectedSegmentIndex != -1 && selectedPointIndex != -1) {
+        size_t globalIndex = 0;
+        for (size_t j = 0; j < selectedSegmentIndex; ++j) {
+            globalIndex += splineSegments[j].size();
+        }
+        globalIndex += selectedPointIndex;
+        pControlPointShader->setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f)); // White color
+        glDrawArrays(GL_POINTS, globalIndex, 1);
+    }
+
     glPointSize(1.0f);
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
 }
+
+
+
 
 void App::addBezierControlPoint(const glm::vec2& point) {
 
@@ -518,31 +576,61 @@ void App::dragCatmullControlPoint(){
 
 
 void App::insertControlPoint() {
-    if (selectedPointIndex != -1 && selectedSegmentIndex != -1) {
-        glm::vec2 newPoint = (splineSegments[selectedSegmentIndex][selectedPointIndex] +
-                              splineSegments[selectedSegmentIndex][(selectedPointIndex + 1) % 4]) * 0.5f;
-        splineSegments[selectedSegmentIndex].insert(splineSegments[selectedSegmentIndex].begin() + selectedPointIndex + 1, newPoint);
+    if (selectedPointIndex != -1) {
+        if(inBezierMode){
+            glm::vec2 newPoint = (splineSegments[selectedSegmentIndex][selectedPointIndex] +
+                                splineSegments[selectedSegmentIndex][(selectedPointIndex + 1) % 4]) * 0.5f;
+            splineSegments[selectedSegmentIndex].insert(splineSegments[selectedSegmentIndex].begin() + selectedPointIndex + 1, newPoint);
 
-        // Recalculate control points to maintain C2 continuity
-        if (splineSegments.size() > 1 && selectedSegmentIndex < splineSegments.size() - 1) {
-            auto& currSegment = splineSegments[selectedSegmentIndex];
-            auto& nextSegment = splineSegments[selectedSegmentIndex + 1];
-            nextSegment[1] = 2.0f * nextSegment[0] - currSegment[2];
-            nextSegment[2] = 2.0f * nextSegment[1] - nextSegment[0];
+            // Recalculate control points to maintain C2 continuity
+            if (splineSegments.size() > 1 && selectedSegmentIndex < splineSegments.size() - 1) {
+                auto& currSegment = splineSegments[selectedSegmentIndex];
+                auto& nextSegment = splineSegments[selectedSegmentIndex + 1];
+                nextSegment[1] = 2.0f * nextSegment[0] - currSegment[2];
+                nextSegment[2] = 2.0f * nextSegment[1] - nextSegment[0];
+            }
+        }
+        else if(inCatmullRomMode){
+            std::vector<glm::vec2> tempControlPoints(controlPoints.size()+1);
+            for(int i = 0; i<=selectedPointIndex; i++){
+                tempControlPoints[i] = controlPoints[i];
+            }
+            tempControlPoints[selectedPointIndex+1] = currentMousePos;
+            for(int i = selectedPointIndex+1; i<controlPoints.size(); i++){
+                tempControlPoints[i+1] = controlPoints[i];
+            }
+            controlPoints = tempControlPoints;
+            buildBezierFromCatmullRom();
         }
     }
 }
 
 void App::deleteControlPoint() {
-    if (selectedPointIndex != -1 && selectedSegmentIndex != -1) {
-        splineSegments[selectedSegmentIndex].erase(splineSegments[selectedSegmentIndex].begin() + selectedPointIndex);
+    if(inBezierMode){
+        if (selectedPointIndex != -1 && selectedSegmentIndex != -1) {
+            splineSegments[selectedSegmentIndex].erase(splineSegments[selectedSegmentIndex].begin() + selectedPointIndex);
 
-        // Recalculate control points to maintain C2 continuity
-        if (splineSegments.size() > 1 && selectedSegmentIndex < splineSegments.size() - 1) {
-            auto& currSegment = splineSegments[selectedSegmentIndex];
-            auto& nextSegment = splineSegments[selectedSegmentIndex + 1];
-            nextSegment[1] = 2.0f * nextSegment[0] - currSegment[2];
-            nextSegment[2] = 2.0f * nextSegment[1] - nextSegment[0];
+            // Recalculate control points to maintain C2 continuity
+            if (splineSegments.size() > 1 && selectedSegmentIndex < splineSegments.size() - 1) {
+                auto& currSegment = splineSegments[selectedSegmentIndex];
+                auto& nextSegment = splineSegments[selectedSegmentIndex + 1];
+                nextSegment[1] = 2.0f * nextSegment[0] - currSegment[2];
+                nextSegment[2] = 2.0f * nextSegment[1] - nextSegment[0];
+            }
+        }
+    }
+    else if(inCatmullRomMode){
+        if(selectedPointIndex!=-1){
+            std::vector<glm::vec2> tempControlPoints(controlPoints.size()-1);
+            for(int i = 0; i<selectedPointIndex; i++){
+                tempControlPoints[i] = controlPoints[i];
+            }
+            // tempControlPoints[selectedPointIndex+1] = currentMousePos;
+            for(int i = selectedPointIndex+1; i<controlPoints.size(); i++){
+                tempControlPoints[i-1] = controlPoints[i];
+            }
+            controlPoints = tempControlPoints;
+            buildBezierFromCatmullRom();
         }
     }
 }
