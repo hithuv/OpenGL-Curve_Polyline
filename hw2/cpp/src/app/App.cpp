@@ -122,7 +122,12 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
         }
         else if(app.curveFinalized && button == GLFW_MOUSE_BUTTON_LEFT){
             if(action == GLFW_PRESS){
-                if(app.selectedPointIndex == -1)app.selectControlPoint();
+                if(action == GLFW_PRESS && app.selectedPointIndex != -1 && app.insertPressed){
+                    app.insertControlPoint();
+                    app.selectedPointIndex = -1;
+                    app.selectedSegmentIndex = -1;
+                }
+                else if(app.selectedPointIndex == -1)app.selectControlPoint();
                 else {
                     app.selectedPointIndex = -1;
                     app.selectedSegmentIndex = -1;
@@ -140,6 +145,8 @@ void App::mouseButtonCallback(GLFWwindow * window, int button, int action, int m
         if(app.curveFinalized==false && action == GLFW_PRESS){
             if(action == GLFW_PRESS && app.selectedPointIndex != -1 && app.insertPressed){
                 app.insertControlPoint();
+                app.selectedPointIndex = -1;
+                app.selectedSegmentIndex = -1;
             }
             else if (button == GLFW_MOUSE_BUTTON_LEFT) {
                 // std::cout<<app.splineSegments.size()<<"click\n";
@@ -220,6 +227,12 @@ App::App() : Window(kWindowWidth, kWindowHeight, kWindowName, nullptr, nullptr)
     pControlPointShader = std::make_unique<Shader>("src/shader/control_point.vert.glsl",
                                                "src/shader/control_point.frag.glsl");
 
+    pBezierShader3D = std::make_unique<Shader>("src/shader/bezier3d.vert.glsl",
+                                           "src/shader/bezier3d.tcs.glsl",
+                                           "src/shader/bezier3d.tes.glsl",
+                                           "src/shader/bezier3d.frag.glsl");
+
+
 
     
 
@@ -232,23 +245,15 @@ void App::render()
     auto t = static_cast<float>(timeElapsedSinceLastFrame);
 
     
+    pBezierShader->use();
+    pBezierShader->setFloat("windowWidth", static_cast<float>(kWindowWidth));
+    pBezierShader->setFloat("windowHeight", static_cast<float>(kWindowHeight));
+    renderSpline();
+    renderControlPoints();
 
+    
 
-    if (inBezierMode) {
-        pBezierShader->use();
-        pBezierShader->setFloat("windowWidth", static_cast<float>(kWindowWidth));
-        pBezierShader->setFloat("windowHeight", static_cast<float>(kWindowHeight));
-        renderSpline();
-        renderControlPoints();
-    }
-
-    if(inCatmullRomMode){
-        pBezierShader->use();
-        pBezierShader->setFloat("windowWidth", static_cast<float>(kWindowWidth));
-        pBezierShader->setFloat("windowHeight", static_cast<float>(kWindowHeight));
-        renderSpline();
-        renderControlPoints(); //Catmull Rom control Points
-    }
+    
 
 }
 

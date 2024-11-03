@@ -74,8 +74,8 @@ private:
     
     // In principle, a shader could be reused across multiple objects.
     // Thus, these shaders are not designed as members of object classes.
-    std::unique_ptr<Shader> pTriangleShader {nullptr};
-    std::unique_ptr<Shader> pCircleShader {nullptr};
+    // std::unique_ptr<Shader> pTriangleShader {nullptr};
+    // std::unique_ptr<Shader> pCircleShader {nullptr};
 
     // Objects to render.
     std::vector<std::unique_ptr<Renderable>> shapes;
@@ -110,6 +110,18 @@ private:
     uint tessellationShaderProgram;
     int selectedPointIndex = -1;
     int selectedSegmentIndex = -1;
+
+    //3D stuff:
+    glm::mat4 projection;
+    glm::mat4 view;
+    glm::vec3 cameraPos;
+    glm::vec3 cameraFront;
+    glm::vec3 cameraUp;
+    bool is3DMode = false;
+
+    std::unique_ptr<Shader> pBezierShader3D {nullptr};
+    std::unique_ptr<Shader> pControlPointShader3D {nullptr};
+
 };
 
 #endif  // APP_H
