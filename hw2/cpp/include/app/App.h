@@ -5,6 +5,8 @@
 #include <vector>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include "app/Window.h"
 
@@ -112,6 +114,8 @@ private:
     int selectedSegmentIndex = -1;
 
     //3D stuff:
+    bool rPressed {false};
+    float cameraSpeed = 0.05f;
     glm::mat4 projection;
     glm::mat4 view;
     glm::vec3 cameraPos;
@@ -121,6 +125,58 @@ private:
 
     std::unique_ptr<Shader> pBezierShader3D {nullptr};
     std::unique_ptr<Shader> pControlPointShader3D {nullptr};
+    std::vector<glm::vec3> controlPoints3D;
+    std::vector<std::vector<glm::vec3>> splineSegments3D;
+    void updateCamera();
+    void renderSpline3D();
+    void renderControlPoints3D();
+
+    glm::vec3 mousePos3D;
+    glm::vec3 currentMousePos3D;
+
+    glm::vec3 lastPosition;
+    glm::quat currentRotation;
+    float trackballSize;
+
+    glm::vec3 screenToSphere(float x, float y);
+
+//     glm::vec3 projectToSphere(const glm::vec2& pos) {
+//         float z;
+//         float d = glm::length(pos);
+//         if (d < trackballSize * 0.70710678118654752440) {
+//             // Inside sphere
+//             z = std::sqrt(trackballSize * trackballSize - d * d);
+//         } else {
+//             // On hyperbola
+//             float t = trackballSize / 1.41421356237309504880;
+//             z = t * t / d;
+//         }
+//         return glm::normalize(glm::vec3(pos.x, pos.y, z));
+//     }
+
+// public:
+    
+
+//     void startRotation(const glm::vec2& pos) {
+//         lastPosition = projectToSphere(pos);
+//     }
+
+//     void updateRotation(const glm::vec2& pos) {
+//         glm::vec3 currentPosition = projectToSphere(pos);
+//         glm::vec3 rotationAxis = glm::cross(lastPosition, currentPosition);
+        
+//         float dotProduct = glm::dot(lastPosition, currentPosition);
+//         float rotationAngle = glm::acos(std::min(1.0f, dotProduct));
+
+//         glm::quat rotation = glm::angleAxis(rotationAngle, rotationAxis);
+//         currentRotation = rotation * currentRotation;
+
+//         lastPosition = currentPosition;
+//     }
+
+//     glm::mat4 getRotationMatrix() {
+//         return glm::mat4_cast(currentRotation);
+//     }
 
 };
 

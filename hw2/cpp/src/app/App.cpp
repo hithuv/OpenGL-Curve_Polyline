@@ -23,7 +23,7 @@ void App::run()
 
         // Send render commands to OpenGL server
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         render();
 
@@ -38,9 +38,31 @@ void App::run()
 void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
 {
     App & app = *reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
+    if (app.is3DMode) {
+        // Store 2D mouse position
+        // app.mousePos3D.x = xpos;
+        // app.mousePos3D.y = App::kWindowHeight - ypos;
+        
+        // // Project 2D point onto a sphere for 3D position
+        // app.currentMousePos3D = app.screenToSphere(xpos, ypos);
+
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+            glm::vec3 currentPosition = app.screenToSphere(xpos, ypos);
+            glm::vec3 rotationAxis = glm::cross(app.lastPosition, currentPosition);
+            
+            float dotProduct = glm::dot(app.lastPosition, currentPosition);
+            float rotationAngle = glm::acos(std::min(1.0f, dotProduct));
+            
+            glm::quat rotation = glm::angleAxis(rotationAngle, rotationAxis);
+            app.currentRotation = rotation * app.currentRotation;
+            
+            app.lastPosition = currentPosition;
+        }
+    }
     app.mousePos.x = xpos;
     app.mousePos.y = App::kWindowHeight - ypos;
     app.currentMousePos = app.mousePos;
+    
 
     if (app.inBezierMode && app.mousePressed && app.selectedPointIndex != -1 && app.selectedSegmentIndex != -1) {
         app.dragBezierControlPoint();
@@ -64,6 +86,7 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
 
 
     if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
+        // app.is3DMode = false;
         app.curveFinalized = false;
         app.inBezierMode = true;
         app.inCatmullRomMode = false;
@@ -72,14 +95,34 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
         app.controlPoints.clear();
         app.selectedSegmentIndex = -1;
         app.selectedPointIndex = -1;
+        app.controlPoints3D.clear();
+        app.splineSegments3D.clear();
     }
     else if(key == GLFW_KEY_3 && action == GLFW_PRESS){
+        // app.is3DMode = false;
         app.selectedSegmentIndex = -1;
         app.selectedPointIndex = -1;
         app.curveFinalized = false;
         app.inBezierMode = false;
         app.inCatmullRomMode = true;
         std::cout << "inCatmullRomMode = true" << std::endl;
+        app.splineSegments.clear();
+        app.controlPoints.clear();
+        app.controlPoints3D.clear();
+        app.splineSegments3D.clear();
+    }
+    else if(key == GLFW_KEY_4 && action == GLFW_PRESS){
+        if(app.is3DMode == false){
+            std::cout << "Switched to 3D mode" << std::endl;
+            app.is3DMode = true;
+        }
+        else{
+            std::cout << "Switched to 2D mode" << std::endl;
+            app.is3DMode = false;
+        } 
+        app.curveFinalized = false;
+        app.controlPoints3D.clear();
+        app.splineSegments3D.clear();
         app.splineSegments.clear();
         app.controlPoints.clear();
     }
@@ -103,6 +146,24 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
             app.insertPressed = false;
         }
     }
+    else if(key == GLFW_KEY_R){
+        if(action == GLFW_PRESS){
+            app.rPressed = true;
+        }
+        else{
+            app.rPressed = false;
+        }
+    }
+    // if (app.is3DMode) {
+    //     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    //         app.cameraPos += app.cameraSpeed * app.cameraFront;
+    //     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    //         app.cameraPos -= app.cameraSpeed * app.cameraFront;
+    //     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    //         app.cameraPos -= glm::normalize(glm::cross(app.cameraFront, app.cameraUp)) * app.cameraSpeed;
+    //     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    //         app.cameraPos += glm::normalize(glm::cross(app.cameraFront, app.cameraUp)) * app.cameraSpeed;
+    // }
     
 }
 
@@ -195,7 +256,22 @@ void App::perFrameTimeLogic(GLFWwindow * window)
 
 void App::processKeyInput(GLFWwindow * window)
 {
+    App & app = *reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
+    
 
+    if (app.is3DMode) {
+        float currentSpeed = app.cameraSpeed * static_cast<float>(app.timeElapsedSinceLastFrame);
+        // std::cout<<"CameraPos b = "<<app.cameraPos.x<<" "<<app.cameraPos.y<<" "<<app.cameraPos.z<<"\n";
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            app.cameraPos += currentSpeed * app.cameraFront;
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            app.cameraPos -= currentSpeed * app.cameraFront;
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            app.cameraPos -= glm::normalize(glm::cross(app.cameraFront, app.cameraUp)) * currentSpeed;
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            app.cameraPos += glm::normalize(glm::cross(app.cameraFront, app.cameraUp)) * currentSpeed;
+        // std::cout<<"CameraPos a = "<<app.cameraPos.x<<" "<<app.cameraPos.y<<" "<<app.cameraPos.z<<"\n";
+    }
 }
 
 
@@ -214,6 +290,7 @@ App::App() : Window(kWindowWidth, kWindowHeight, kWindowName, nullptr, nullptr)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glLineWidth(1.0f);
     glPointSize(1.0f);
+    glEnable(GL_DEPTH_TEST);
 
     //Sris
     // pBezierShader = std::make_unique<Shader>("src/shader/bezier.vert.glsl",
@@ -232,7 +309,23 @@ App::App() : Window(kWindowWidth, kWindowHeight, kWindowName, nullptr, nullptr)
                                            "src/shader/bezier3d.tes.glsl",
                                            "src/shader/bezier3d.frag.glsl");
 
+    pControlPointShader3D = std::make_unique<Shader>("src/shader/control_point3d.vert.glsl",
+                                               "src/shader/control_point3d.frag.glsl");
 
+    trackballSize = std::min(kWindowWidth, kWindowHeight) / 2.0f;
+    currentRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+    cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+    cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    is3DMode = false;
+
+    // Initialize projection matrix
+    projection = glm::perspective(glm::radians(45.0f), 
+                                  static_cast<float>(kWindowWidth) / static_cast<float>(kWindowHeight), 
+                                  0.1f, 100.0f);
+
+    // Initialize view matrix
+    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
     
 
@@ -244,16 +337,27 @@ void App::render()
 {
     auto t = static_cast<float>(timeElapsedSinceLastFrame);
 
-    
-    pBezierShader->use();
-    pBezierShader->setFloat("windowWidth", static_cast<float>(kWindowWidth));
-    pBezierShader->setFloat("windowHeight", static_cast<float>(kWindowHeight));
-    renderSpline();
-    renderControlPoints();
-
-    
-
-    
+    if (is3DMode) {
+        processKeyInput(pWindow);
+        updateCamera();
+        glm::mat4 rotationMatrix = glm::mat4_cast(currentRotation);
+        pBezierShader3D->use();
+        pBezierShader3D->setMat4("model", rotationMatrix);
+        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        
+        pBezierShader3D->setMat4("projection", projection);
+        pBezierShader3D->setMat4("view", view);
+        pBezierShader3D->setFloat("tessLevel", 64.0f);
+        renderSpline3D();
+        renderControlPoints3D();
+    }
+    else{
+        pBezierShader->use();
+        pBezierShader->setFloat("windowWidth", static_cast<float>(kWindowWidth));
+        pBezierShader->setFloat("windowHeight", static_cast<float>(kWindowHeight));
+        renderSpline();
+        renderControlPoints();
+    } 
 
 }
 
@@ -374,6 +478,27 @@ void App::renderControlPoints() {
 
 void App::addBezierControlPoint(const glm::vec2& point) {
 
+    if(is3DMode){
+        glm::vec3 point3D = screenToSphere(point.x, point.y);
+        if (splineSegments3D.empty() || splineSegments3D.back().size() == 4) {
+            splineSegments3D.push_back({});
+        }
+        splineSegments3D.back().push_back(point3D);
+
+        if (splineSegments3D.back().size() == 4 && splineSegments3D.size() > 1) {
+            // Calculate C2 continuity for the next segment
+            auto& prevSegment = splineSegments3D[splineSegments3D.size() - 2];
+            auto& currSegment = splineSegments3D.back();
+            glm::vec3 P0 = prevSegment[3];
+            glm::vec3 P1 = currSegment[0];
+            glm::vec3 P2 = currSegment[1];
+            glm::vec3 P3 = currSegment[2];
+            glm::vec3 P4 = P3 + (P3 - P2);
+            glm::vec3 P5 = P1 + 2.0f * P4 - 2.0f * P2;
+            splineSegments3D.push_back({P3, P4, P5});
+        }
+    }
+
     if(splineSegments.size() == 0){
         splineSegments.push_back({});
         splineSegments.back().push_back(point);
@@ -398,7 +523,26 @@ void App::addBezierControlPoint(const glm::vec2& point) {
 }
 
 void App::addCatmullRomControlPoint(const glm::vec2& point) {
+    
+    if(is3DMode){
 
+        glm::vec3 point3D = screenToSphere(point.x, point.y);
+        std::cout<<"2D = ("<<point.x<<", "<<point.y<<")\n";
+        std::cout << "Point: " << point3D.x << ", " << point3D.y << ", " << point3D.z << std::endl;
+        controlPoints3D.push_back(point3D);
+        
+        if (controlPoints3D.size() >= 4) {
+            size_t n = controlPoints3D.size();
+            glm::vec3 P0 = controlPoints3D[n-4];
+            glm::vec3 P1 = controlPoints3D[n-3];
+            glm::vec3 P2 = controlPoints3D[n-2];
+            glm::vec3 P3 = controlPoints3D[n-1];
+            glm::vec3 v1 = (P2 + 6.0f*P1 - P0) / 6.0f;
+            glm::vec3 v2 = (P1 + 6.0f*P2 - P3) / 6.0f;
+            splineSegments3D.push_back({P1, v1, v2, P2});
+        }
+        return;
+    }
     if(controlPoints.size() <= 2 ){
         controlPoints.push_back(point);
     }
@@ -769,6 +913,117 @@ void App::buildBezierFromCatmullRom(){
         splineSegments.push_back({Pi, v1, v2, Pi_p1});
     }
 }
+
+void App::renderSpline3D() {
+    // std::cout<<"Here";
+    if (splineSegments3D.empty()) return;
+
+    pBezierShader3D->use();
+    pBezierShader3D->setMat4("projection", projection);
+    pBezierShader3D->setMat4("view", view);
+    pBezierShader3D->setFloat("tessLevel", 64.0f); // Adjust as needed
+    pBezierShader3D->setVec3("color", glm::vec3(0.0f, 0.0f, 1.0f)); // Blue color for the curve
+
+    GLuint VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glPatchParameteri(GL_PATCH_VERTICES, 4);
+
+    for (const auto& segment : splineSegments3D) {
+        if (segment.size() == 4) {
+            glBufferData(GL_ARRAY_BUFFER, segment.size() * sizeof(glm::vec3), segment.data(), GL_STATIC_DRAW);
+            glDrawArrays(GL_PATCHES, 0, 4);
+        }
+    }
+
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+}
+
+
+void App::renderControlPoints3D() {
+    if (inBezierMode && splineSegments3D.empty()) return;
+    if(inCatmullRomMode && controlPoints3D.empty())return;
+    
+    std::vector<glm::vec3> allControlPoints;
+    if(inBezierMode) {
+        for (const auto& segment : splineSegments3D) {
+            allControlPoints.insert(allControlPoints.end(), segment.begin(), segment.end());
+        }
+    } else if(inCatmullRomMode) {
+        allControlPoints = controlPoints3D;
+    }
+
+    GLuint VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, allControlPoints.size() * sizeof(glm::vec3), allControlPoints.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    if (pControlPointShader3D != nullptr) {
+        pControlPointShader3D->use();
+    } else {
+        std::cerr << "Control point shader is null!" << std::endl;
+        return;
+    }
+    pControlPointShader3D->setMat4("projection", projection);
+    pControlPointShader3D->setMat4("view", view);
+    pControlPointShader3D->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Red color for control points
+    
+    glPointSize(15.0f); // Increase this value
+    // std::cout<<"size of allcp: "<<allControlPoints.size()<<"\n";
+    glDrawArrays(GL_POINTS, 0, allControlPoints.size());
+
+    if (inCatmullRomMode && selectedPointIndex != -1 && selectedPointIndex < allControlPoints.size()) {
+        pControlPointShader3D->setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f)); // White color
+        glDrawArrays(GL_POINTS, selectedPointIndex, 1);
+    }
+
+    if (inBezierMode && selectedSegmentIndex != -1 && selectedPointIndex != -1) {
+        size_t globalIndex = 0;
+        for (size_t j = 0; j < selectedSegmentIndex; ++j) {
+            globalIndex += splineSegments3D[j].size();
+        }
+        globalIndex += selectedPointIndex;
+        pControlPointShader3D->setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f)); // White color
+        glDrawArrays(GL_POINTS, globalIndex, 1);
+    }
+
+    glPointSize(1.0f);
+
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+}
+
+void App::updateCamera() {
+    float radius = 5.0f; // Adjust as needed
+    float camX = sin(glfwGetTime()) * radius;
+    float camZ = cos(glfwGetTime()) * radius;
+    view = glm::lookAt(glm::vec3(camX, 0.0f, camZ), 
+                       glm::vec3(0.0f, 0.0f, 0.0f), 
+                       glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
+glm::vec3 App::screenToSphere(float x, float y) {
+    glm::vec2 p = glm::vec2(x - kWindowWidth/2.0f, kWindowHeight/2.0f - y) / trackballSize;
+    float r2 = glm::dot(p, p);
+    if (r2 > 1.0f) {
+        p = glm::normalize(p);
+        return glm::vec3(p.x, p.y, 0.0f);
+    } else {
+        return glm::vec3(p.x, p.y, std::sqrt(1.0f - r2));
+    }
+}
+
 
 //bezier config
 // 2 2 13
