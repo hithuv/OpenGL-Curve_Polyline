@@ -42,8 +42,11 @@ void App::cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
     app.mousePos.y = App::kWindowHeight - ypos;
     app.currentMousePos = app.mousePos;
 
-    if (app.selectedPointIndex != -1 && app.selectedSegmentIndex != -1) {
+    if (app.inBezierMode && app.selectedPointIndex != -1 && app.selectedSegmentIndex != -1) {
         app.dragBezierControlPoint();
+    }
+    else if(app.inCatmullRomMode && app.selectedPointIndex != -1){
+        app.dragCatmullControlPoint();
     }
 
 }
@@ -76,21 +79,18 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
         app.splineSegments.clear();
         app.controlPoints.clear();
     }
-    else if(app.inBezierMode){
-        if (key == GLFW_KEY_INSERT && action == GLFW_PRESS) {
-            app.insertControlPoint();
-        } else if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
-            app.deleteControlPoint();
-        } else if (key == GLFW_KEY_S && action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
-            std::cout<<"Saving file"<<std::endl;
-            app.saveSplineToFile("./etc/config.txt");
-        } else if (key == GLFW_KEY_L && action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
-            app.loadSplineFromFile("./etc/config.txt");
-        }
+    else if ((key == GLFW_KEY_INSERT || key == GLFW_KEY_I) && action == GLFW_PRESS) {
+        app.insertControlPoint();
+    } else if (key == GLFW_KEY_DELETE && action == GLFW_PRESS) {
+        app.deleteControlPoint();
+    } else if (key == GLFW_KEY_S && action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
+        std::cout<<"Saving file"<<std::endl;
+        app.saveSplineToFile("./etc/config.txt");
+    } else if (key == GLFW_KEY_L && action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
+        app.loadSplineFromFile("./etc/config.txt");
     }
-    else if(app.inCatmullRomMode){
-        std::cout<<"HellofromRom \n";
-    }
+    
+    
 
 }
 
@@ -363,11 +363,23 @@ glm::vec2 App::evaluateBezier(const std::vector<glm::vec2>& controlPoints, float
 }
 
 void App::selectControlPoint() {
-    for (size_t i = 0; i < splineSegments.size(); ++i) {
-        for (size_t j = 0; j < splineSegments[i].size(); ++j) {
-            if (glm::distance(splineSegments[i][j], currentMousePos) < 10.0f) {
-                selectedSegmentIndex = i;
-                selectedPointIndex = j;
+
+    if(inBezierMode){
+        for (size_t i = 0; i < splineSegments.size(); ++i) {
+            for (size_t j = 0; j < splineSegments[i].size(); ++j) {
+                if (glm::distance(splineSegments[i][j], currentMousePos) < 10.0f) {
+                    selectedSegmentIndex = i;
+                    selectedPointIndex = j;
+                    return;
+                }
+            }
+        }
+    }
+    else if(inCatmullRomMode){
+        for (size_t i = 0; i < controlPoints.size(); ++i) {
+            if (glm::distance(controlPoints[i], currentMousePos) < 10.0f) {
+                // selectedSegmentIndex = i;
+                selectedPointIndex = i;
                 return;
             }
         }
@@ -495,15 +507,12 @@ void App::dragBezierControlPoint() {
             }
         }
     }
-    else if(inCatmullRomMode){
-        if(selectedPointIndex == 1 || selectedPointIndex == 2)return;
-        if(selectedPointIndex == 0){
-            //Insert Code here
-        }
-        else if(selectedPointIndex == 3){
-            //Insert Code here
-        }
-    }
+}
+
+void App::dragCatmullControlPoint(){
+    if(selectedPointIndex == -1)return;
+    controlPoints[selectedPointIndex] = currentMousePos;
+    buildBezierFromCatmullRom();
 }
 
 
@@ -541,7 +550,7 @@ void App::deleteControlPoint() {
 
 void App::saveSplineToFile(const std::string& filename) {
     std::ofstream file(filename);
-    if (file.is_open()) {
+    if (file.is_open() && inBezierMode) {
         file << "2 2 " << getTotalControlPoints() << std::endl;
         
         // Write the first segment completely
@@ -560,20 +569,38 @@ void App::saveSplineToFile(const std::string& filename) {
         
         file.close();
     }
+    else if (file.is_open() && inCatmullRomMode) {
+        file << "2 1 " << getTotalControlPoints() << std::endl;
+        
+        // Write the first segment completely
+        for(int i = 0; i<controlPoints.size(); i++){
+            file << controlPoints[i].x << " " << controlPoints[i].y << std::endl;
+        }
+        
+        file.close();
+    }
 }
 
 int App::getTotalControlPoints() const {
-    if (splineSegments.empty()) return 0;
+
+    if(inBezierMode){
+        if (splineSegments.empty()) return 0;
     
-    // Count all points in the first segment
-    int total = splineSegments[0].size();
-    
-    // For subsequent segments, only count the last 3 points
-    for (size_t i = 1; i < splineSegments.size(); ++i) {
-        total += std::max(0, static_cast<int>(splineSegments[i].size()) - 1);
+        // Count all points in the first segment
+        int total = splineSegments[0].size();
+        
+        // For subsequent segments, only count the last 3 points
+        for (size_t i = 1; i < splineSegments.size(); ++i) {
+            total += std::max(0, static_cast<int>(splineSegments[i].size()) - 1);
+        }
+        
+        return total;
     }
-    
-    return total;
+    else if(inCatmullRomMode){
+        return controlPoints.size();
+    }
+    std::cout<<"ERROR MODE IN getTOTAL CONTROL POINTS\n";
+    return -1;
 }
 
 
@@ -584,22 +611,47 @@ void App::loadSplineFromFile(const std::string& filename) {
         int dim, continuity, totalPoints;
         file >> dim >> continuity >> totalPoints;
         
-        splineSegments.clear();
-        splineSegments.push_back({});
-        for (int i = 0; i < totalPoints-1; ++i) {
+        if(dim == 2){
+            if(!inBezierMode){
+                std::cout<<"Converting to Bezier Mode since loading a curve with C2 satisfied";
+                inBezierMode = true;
+                inCatmullRomMode = false;
+            }
+            splineSegments.clear();
+            controlPoints.clear();
+            splineSegments.push_back({});
+            for (int i = 0; i < totalPoints-1; ++i) {
+                float x, y;
+                file >> x >> y;
+                splineSegments.back().push_back(glm::vec2(x,y));
+                if(splineSegments.back().size() == 4){
+                    splineSegments.push_back({});
+                    splineSegments.back().push_back(glm::vec2(x,y));
+                }
+            }
+            curveFinalized = true;
             float x, y;
             file >> x >> y;
             splineSegments.back().push_back(glm::vec2(x,y));
-            if(splineSegments.back().size() == 4){
-                splineSegments.push_back({});
-                splineSegments.back().push_back(glm::vec2(x,y));
-            }
+            file.close();
         }
-        curveFinalized = true;
-        float x, y;
-        file >> x >> y;
-        splineSegments.back().push_back(glm::vec2(x,y));
-        file.close();
+        else if(dim == 1){
+            if(!inCatmullRomMode){
+                std::cout<<"Converting to inCatmullRom Mode since loading a curve with C1 satisfied";
+                inBezierMode = false;
+                inCatmullRomMode = true;
+            }
+            splineSegments.clear();
+            controlPoints.clear();
+            for (int i = 0; i < totalPoints; ++i) {
+                float x, y;
+                file >> x >> y;
+                controlPoints.push_back(glm::vec2(x,y));
+            }
+            curveFinalized=true;
+            buildBezierFromCatmullRom();
+
+        }
     }
 }
 
@@ -609,4 +661,37 @@ std::vector<glm::vec2> App::calculateNewSegmentPoints(const std::vector<glm::vec
     glm::vec2 p2 = (2.0f * p1 - p0 + newPoint) / 2.0f;
     return {p0, p1, p2};
 }
+
+void App::buildBezierFromCatmullRom(){
+    splineSegments.clear();
+    if(controlPoints.size()<4)return;
+    for(int i = 3; i<controlPoints.size(); i++){
+        glm::vec2 Pi_m1 = controlPoints[i-3];
+        glm::vec2 Pi = controlPoints[i-2];
+        glm::vec2 Pi_p1 = controlPoints[i-1];
+        glm::vec2 Pi_p2 = controlPoints[i];
+        glm::vec2 v1 = (Pi_p1 + 6.0f*Pi - Pi_m1)/6.0f;
+        glm::vec2 v2 = (Pi + 6.0f*Pi_p1 - Pi_p2)/6.0f;
+        splineSegments.push_back({Pi, v1, v2, Pi_p1});
+    }
+}
+
+//bezier config
+// 2 2 13
+// 432 484
+// 454 536
+// 496 536
+// 523 488
+// 550 440
+// 562 344
+// 511 341
+// 460 338
+// 346 428
+// 340 526
+// 334 624
+// 436 730
+// 554 627
+
+//catmullrom Config
+
 

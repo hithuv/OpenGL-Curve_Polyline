@@ -97,6 +97,8 @@ private:
     glm::dvec2 lastMouseLeftPressPos {0.0, 0.0};
     void selectControlPoint();
     void dragBezierControlPoint();
+    void buildBezierFromCatmullRom();
+    void dragCatmullControlPoint();
     void insertControlPoint();
     void deleteControlPoint();
     void saveSplineToFile(const std::string &filename);
