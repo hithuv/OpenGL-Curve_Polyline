@@ -115,19 +115,21 @@ private:
 
     //3D stuff:
     bool rPressed {false};
-    float cameraSpeed = 0.05f;
+    float cameraSpeed = 0.3f;
     glm::mat4 projection;
     glm::mat4 view;
     glm::vec3 cameraPos;
     glm::vec3 cameraFront;
     glm::vec3 cameraUp;
     bool is3DMode = false;
+    float rotationAngle = 0;
 
     std::unique_ptr<Shader> pBezierShader3D {nullptr};
     std::unique_ptr<Shader> pControlPointShader3D {nullptr};
     std::vector<glm::vec3> controlPoints3D;
     std::vector<std::vector<glm::vec3>> splineSegments3D;
     void updateCamera();
+    void updateCamera1();
     void renderSpline3D();
     void renderControlPoints3D();
 

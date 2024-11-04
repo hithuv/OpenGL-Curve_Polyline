@@ -146,14 +146,7 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
             app.insertPressed = false;
         }
     }
-    else if(key == GLFW_KEY_R){
-        if(action == GLFW_PRESS){
-            app.rPressed = true;
-        }
-        else{
-            app.rPressed = false;
-        }
-    }
+    
     // if (app.is3DMode) {
     //     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     //         app.cameraPos += app.cameraSpeed * app.cameraFront;
@@ -270,6 +263,17 @@ void App::processKeyInput(GLFWwindow * window)
             app.cameraPos -= glm::normalize(glm::cross(app.cameraFront, app.cameraUp)) * currentSpeed;
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
             app.cameraPos += glm::normalize(glm::cross(app.cameraFront, app.cameraUp)) * currentSpeed;
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+            app.cameraPos += currentSpeed * app.cameraUp;
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+            app.cameraPos -= currentSpeed * app.cameraUp;
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+            app.rotationAngle += glm::radians(0.1f); 
+            app.updateCamera();
+            return;
+             // Update camera immediately
+        }
+        app.updateCamera1();
         // std::cout<<"CameraPos a = "<<app.cameraPos.x<<" "<<app.cameraPos.y<<" "<<app.cameraPos.z<<"\n";
     }
 }
@@ -339,7 +343,7 @@ void App::render()
 
     if (is3DMode) {
         processKeyInput(pWindow);
-        updateCamera();
+        
         glm::mat4 rotationMatrix = glm::mat4_cast(currentRotation);
         pBezierShader3D->use();
         pBezierShader3D->setMat4("model", rotationMatrix);
@@ -449,11 +453,16 @@ void App::renderControlPoints() {
     pControlPointShader->setFloat("windowHeight", static_cast<float>(kWindowHeight));
     pControlPointShader->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Red color for control points
 
+    glDisable(GL_DEPTH_TEST);
+
+
     glPointSize(9.0f);
     glDrawArrays(GL_POINTS, 0, allControlPoints.size());
+    
 
     if (inCatmullRomMode && selectedPointIndex != -1 && selectedPointIndex < allControlPoints.size()) {
         pControlPointShader->setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f)); // White color
+        // std::cout<<"setWhite\n";
         glDrawArrays(GL_POINTS, selectedPointIndex, 1);
     }
 
@@ -466,6 +475,7 @@ void App::renderControlPoints() {
         pControlPointShader->setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f)); // White color
         glDrawArrays(GL_POINTS, globalIndex, 1);
     }
+    glEnable(GL_DEPTH_TEST);
 
     glPointSize(1.0f);
 
@@ -497,6 +507,7 @@ void App::addBezierControlPoint(const glm::vec2& point) {
             glm::vec3 P5 = P1 + 2.0f * P4 - 2.0f * P2;
             splineSegments3D.push_back({P3, P4, P5});
         }
+        return;
     }
 
     if(splineSegments.size() == 0){
@@ -527,8 +538,8 @@ void App::addCatmullRomControlPoint(const glm::vec2& point) {
     if(is3DMode){
 
         glm::vec3 point3D = screenToSphere(point.x, point.y);
-        std::cout<<"2D = ("<<point.x<<", "<<point.y<<")\n";
-        std::cout << "Point: " << point3D.x << ", " << point3D.y << ", " << point3D.z << std::endl;
+        // std::cout<<"2D = ("<<point.x<<", "<<point.y<<")\n";
+        // std::cout << "Point: " << point3D.x << ", " << point3D.y << ", " << point3D.z << std::endl;
         controlPoints3D.push_back(point3D);
         
         if (controlPoints3D.size() >= 4) {
@@ -727,17 +738,12 @@ void App::dragCatmullControlPoint(){
 void App::insertControlPoint() {
     if (selectedPointIndex != -1) {
         if(inBezierMode){
-            glm::vec2 newPoint = (splineSegments[selectedSegmentIndex][selectedPointIndex] +
-                                splineSegments[selectedSegmentIndex][(selectedPointIndex + 1) % 4]) * 0.5f;
-            splineSegments[selectedSegmentIndex].insert(splineSegments[selectedSegmentIndex].begin() + selectedPointIndex + 1, newPoint);
-
-            // Recalculate control points to maintain C2 continuity
-            if (splineSegments.size() > 1 && selectedSegmentIndex < splineSegments.size() - 1) {
-                auto& currSegment = splineSegments[selectedSegmentIndex];
-                auto& nextSegment = splineSegments[selectedSegmentIndex + 1];
-                nextSegment[1] = 2.0f * nextSegment[0] - currSegment[2];
-                nextSegment[2] = 2.0f * nextSegment[1] - nextSegment[0];
+            selectedPointIndex++;
+            if(selectedPointIndex == 4 && selectedSegmentIndex!=splineSegments.size()-1){
+                selectedPointIndex = 1;
+                selectedSegmentIndex++;
             }
+            dragBezierControlPoint();
         }
         else if(inCatmullRomMode){
             std::vector<glm::vec2> tempControlPoints(controlPoints.size()+1);
@@ -787,7 +793,7 @@ void App::deleteControlPoint() {
 
 void App::saveSplineToFile(const std::string& filename) {
     std::ofstream file(filename);
-    if (file.is_open() && inBezierMode) {
+    if (file.is_open() && inBezierMode && !is3DMode) {
         file << "2 2 " << getTotalControlPoints() << std::endl;
         
         // Write the first segment completely
@@ -806,7 +812,7 @@ void App::saveSplineToFile(const std::string& filename) {
         
         file.close();
     }
-    else if (file.is_open() && inCatmullRomMode) {
+    else if (file.is_open() && inCatmullRomMode && !is3DMode) {
         file << "2 1 " << getTotalControlPoints() << std::endl;
         
         // Write the first segment completely
@@ -816,11 +822,53 @@ void App::saveSplineToFile(const std::string& filename) {
         
         file.close();
     }
+    else if(file.is_open() && inCatmullRomMode && is3DMode){
+        file << "3 1 " << getTotalControlPoints() << std::endl;
+        
+        // Write the first segment completely
+        for(int i = 0; i<controlPoints3D.size(); i++){
+            file << controlPoints3D[i].x << " " << controlPoints3D[i].y << " " << controlPoints3D[i].z<< std::endl;
+        }
+        
+        file.close();
+    }
+    else if(file.is_open() && inBezierMode && is3DMode){
+        file << "3 2 " << getTotalControlPoints() << std::endl;
+        
+        // Write the first segment completely
+        if (!splineSegments3D.empty()) {
+            for (const auto& point : splineSegments3D[0]) {
+                file << point.x << " " << point.y << " "<<point.z<<std::endl;
+            }
+            
+            // For subsequent segments, only write the last 3 points
+            for (size_t i = 1; i < splineSegments3D.size(); ++i) {
+                for (size_t j = 1; j < splineSegments3D[i].size(); ++j) {
+                    file << splineSegments3D[i][j].x << " " << splineSegments3D[i][j].y << " " << splineSegments3D[i][j].z << std::endl;
+                }
+            }
+        }
+        
+        file.close();
+    }
 }
 
 int App::getTotalControlPoints() const {
 
     if(inBezierMode){
+        if(is3DMode){
+            if (splineSegments3D.empty()) return 0;
+    
+            // Count all points in the first segment
+            int total = splineSegments3D[0].size();
+            
+            // For subsequent segments, only count the last 3 points
+            for (size_t i = 1; i < splineSegments3D.size(); ++i) {
+                total += std::max(0, static_cast<int>(splineSegments3D[i].size()) - 1);
+            }
+            
+            return total;
+        }
         if (splineSegments.empty()) return 0;
     
         // Count all points in the first segment
@@ -834,6 +882,7 @@ int App::getTotalControlPoints() const {
         return total;
     }
     else if(inCatmullRomMode){
+        if(is3DMode)return controlPoints3D.size();
         return controlPoints.size();
     }
     std::cout<<"ERROR MODE IN getTOTAL CONTROL POINTS\n";
@@ -847,6 +896,10 @@ void App::loadSplineFromFile(const std::string& filename) {
         curveFinalized = false;
         int dim, continuity, totalPoints;
         file >> continuity >> dim >> totalPoints;
+        if(continuity == 3){
+            std::cout<<"loading 3d files not implemented. only 2d loading works. Saving works for 3D also\n";
+            return;
+        }
         
         if(dim == 2){
             if(!inBezierMode){
@@ -884,7 +937,7 @@ void App::loadSplineFromFile(const std::string& filename) {
                 float x, y;
                 file >> x >> y;
                 controlPoints.push_back(glm::vec2(x,y));
-                std::cout<<x<<" "<<y<<std::endl;
+                // std::cout<<x<<" "<<y<<std::endl;
             }
             curveFinalized=true;
             buildBezierFromCatmullRom();
@@ -975,8 +1028,10 @@ void App::renderControlPoints3D() {
         std::cerr << "Control point shader is null!" << std::endl;
         return;
     }
-    pControlPointShader3D->setMat4("projection", projection);
+
+    pControlPointShader3D->setMat4("model", glm::mat4(1.0f));
     pControlPointShader3D->setMat4("view", view);
+    pControlPointShader3D->setMat4("projection", projection);
     pControlPointShader3D->setVec3("color", glm::vec3(1.0f, 0.0f, 0.0f)); // Red color for control points
     
     glPointSize(15.0f); // Increase this value
@@ -1004,25 +1059,108 @@ void App::renderControlPoints3D() {
     glDeleteBuffers(1, &VBO);
 }
 
+void App::updateCamera1(){
+    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+}
+
 void App::updateCamera() {
-    float radius = 5.0f; // Adjust as needed
-    float camX = sin(glfwGetTime()) * radius;
-    float camZ = cos(glfwGetTime()) * radius;
-    view = glm::lookAt(glm::vec3(camX, 0.0f, camZ), 
-                       glm::vec3(0.0f, 0.0f, 0.0f), 
-                       glm::vec3(0.0f, 1.0f, 0.0f));
+    
+    // 
+
+
+    float radius = 5.0f; // Distance from the origin
+    float camX = sin(rotationAngle) * radius;
+    float camZ = cos(rotationAngle) * radius;
+    
+    cameraPos = glm::vec3(camX, 0.0f, camZ);
+    cameraFront = glm::normalize(-cameraPos); // Look at the origin
+    cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    
+    view = glm::lookAt(cameraPos, glm::vec3(0.0f), cameraUp);
+
+    // float radius = 5.0f; // Distance from the origin
+    // float camX = sin(rotationAngle) * radius;
+    // float camZ = cos(rotationAngle) * radius;
+    
+    // glm::vec3 rotatedPosition = glm::vec3(camX, 0.0f, camZ);
+    
+    // // Combine the rotated position with the camera's translation
+    // cameraPos = rotatedPosition + cameraPos;
+    
+    // // Look at the origin
+    // glm::vec3 center = glm::vec3(0.0f);
+    
+    // // Update the view matrix
+    // view = glm::lookAt(cameraPos, center, cameraUp);
+
+
 }
 
 glm::vec3 App::screenToSphere(float x, float y) {
-    glm::vec2 p = glm::vec2(x - kWindowWidth/2.0f, kWindowHeight/2.0f - y) / trackballSize;
-    float r2 = glm::dot(p, p);
-    if (r2 > 1.0f) {
-        p = glm::normalize(p);
-        return glm::vec3(p.x, p.y, 0.0f);
-    } else {
-        return glm::vec3(p.x, p.y, std::sqrt(1.0f - r2));
-    }
+    // glm::vec2 p = glm::vec2(x - kWindowWidth/2.0f, kWindowHeight/2.0f - y) / trackballSize;
+    // float r2 = glm::dot(p, p);
+    // if (r2 > 1.0f) {
+    //     p = glm::normalize(p);
+    //     return glm::vec3(p.x, p.y, 0.0f);
+    // } else {
+    //     return glm::vec3(p.x, p.y, std::sqrt(1.0f - r2));
+    // }
+    float normalizedX = (2.0f * x) / kWindowWidth - 1.0f;
+    // float normalizedY = 1.0f - (2.0f * y) / kWindowHeight;
+    float normalizedY = (2.0f * y) / kWindowHeight - 1.0f;
+    
+    glm::vec4 clipCoords(normalizedX, normalizedY, -1.0f, 1.0f);
+    glm::vec4 eyeCoords = glm::inverse(projection) * clipCoords;
+    eyeCoords.z = -1.0f;
+    eyeCoords.w = 0.0f;
+    
+    glm::vec3 worldCoords = glm::vec3(glm::inverse(view) * eyeCoords);
+    return glm::normalize(worldCoords);
 }
+
+// glm::vec3 App::screenToSphere(float x, float y) {
+//     float normalizedX = (2.0f * x) / kWindowWidth - 1.0f;
+//     // float normalizedY = 1.0f - (2.0f * y) / kWindowHeight;
+//     float normalizedY = (2.0f * y) / kWindowHeight - 1.0f;
+    
+//     glm::vec4 rayClip(normalizedX, normalizedY, -1.0f, 1.0f);
+//     glm::vec4 rayEye = glm::inverse(projection) * rayClip;
+//     rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
+    
+//     glm::vec3 rayWorld = glm::normalize(glm::vec3(glm::inverse(view) * rayEye));
+    
+//     // Intersect ray with a sphere of radius 1 centered at origin
+//     float a = glm::dot(rayWorld, rayWorld);
+//     float b = 2.0f * glm::dot(rayWorld, cameraPos);
+//     float c = glm::dot(cameraPos, cameraPos) - 1.0f;
+//     float discriminant = b*b - 4*a*c;
+    
+//     if (discriminant < 0) {
+//         // No intersection, return a point on the sphere closest to the ray
+//         return glm::normalize(-cameraPos);
+//     } else {
+//         float t = (-b - sqrt(discriminant)) / (2.0f * a);
+//         return glm::normalize(cameraPos + rayWorld * t);
+//     }
+// }
+
+// glm::vec3 App::screenToSphere(float x, float y) {
+//     float normalizedX = (2.0f * x) / kWindowWidth - 1.0f;
+//     // float normalizedY = 1.0f - (2.0f * y) / kWindowHeight;
+//     float normalizedY = (2.0f * y) / kWindowHeight - 1.0f;
+
+    
+//     glm::vec4 clipCoords(normalizedX, normalizedY, -1.0f, 1.0f);
+//     glm::vec4 eyeCoords = glm::inverse(projection) * clipCoords;
+//     eyeCoords.z = -1.0f;
+//     eyeCoords.w = 0.0f;
+    
+//     glm::vec3 worldCoords = glm::vec3(glm::inverse(view) * eyeCoords);
+//     return glm::normalize(worldCoords);
+// }
+
+
+
 
 
 //bezier config
