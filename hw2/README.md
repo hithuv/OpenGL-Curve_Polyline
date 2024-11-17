@@ -1,10 +1,10 @@
 # HW2
 
-Your Name (Please replace with your name.)
+Srihith Bharadwaj Burra
 
-Your SBU ID (Please replace with your 9-digit SBU ID.)
+116728900
 
-Your Email (Please replace with your email.)
+srburra@cs.stonybrook.edu
 
 ## Overview
 
@@ -48,9 +48,8 @@ sudo reboot
   ```bash
   apt install libopencv-dev libglm-dev libglew-dev libglfw3-dev mesa-utils libx11-dev libxi-dev libxrandr-dev
   ```
-- Further Needed for the Python Version (from PyPI):
-```bash
-pip install numpy PyOpenGL PyGLM glfw
+
+
 ```
 
 ## Compile & Run
@@ -64,10 +63,7 @@ make
 cd ..
 ./build/hw2
 ```
-- Python Version. Run inside `py/`, and replace "py3" with your own conda env name (if using the provided VMWare Virtual Machine, **no replacement** is needed here):
-```bash
-conda activate py3
-python main.py
+
 ```
 
 ## Features Implemented
@@ -75,28 +71,36 @@ python main.py
 Check all features implemented with "x" in "[ ]"s. 
 Features or parts left unchecked here won't be graded! 
 
-- [ ] 1. One Segment of Cubic Bezier Spline
-- [ ] 2. Piecewise C(2) Cubic Bezier Spline
-  - [ ] Base Spline Creation And Display
-  - [ ] Control Node Dragging
-  - [ ] Control Node Insertion
-  - [ ] Control Node Deletion
-  - [ ] Save to File
-  - [ ] Load from File
-- [ ] 3. Catmull-Rom Spline
-  - [ ] Base Spline Creation And Display
-  - [ ] Interpolation Point Dragging
-  - [ ] Interpolation Point Insertion
-  - [ ] Interpolation Point Deletion
-  - [ ] Save to File
-  - [ ] Load from File
-- [ ] 4. Extension to 3D (BONUS)
-  - [ ] Tracking Ball
-  - [ ] One Segment of Cubic Bezier Spline
-  - [ ] Piecewise C(2) Bezier Spline
-  - [ ] Catmull-Rom Spline
+- [x] 1. One Segment of Cubic Bezier Spline
+- [x] 2. Piecewise C(2) Cubic Bezier Spline
+  - [x] Base Spline Creation And Display
+  - [x] Control Node Dragging
+  - [x] Control Node Insertion CANT INSERT JUST A SINGLE NODE
+  - [x] Control Node Deletion
+  - [x] Save to File
+  - [x] Load from File
+- [x] 3. Catmull-Rom Spline
+  - [x] Base Spline Creation And Display
+  - [x] Interpolation Point Dragging
+  - [x] Interpolation Point Insertion
+  - [x] Interpolation Point Deletion
+  - [x] Save to File
+  - [x] Load from File
+- [x] 4. Extension to 3D (BONUS)
+  - [x] Tracking Ball
+  - [x] One Segment of Cubic Bezier Spline
+  - [x] Piecewise C(2) Bezier Spline
+  - [x] Catmull-Rom Spline
 
 ## Usage
 
-- If you have implemented extra functionalities not mentioned in the manual, you may specify them here.
-- If your program failed to obey the required mouse/keyboard gestures, you may also specify your own setting here. In this case, penalties may apply.
+If Insert or delete keys do not delete a point, please use key 'I' to insert and key 'BACKSPACE' to delete.
+Selecting a point turns into white, can insert, or delete now.
+Direct click and drag works, and indicated by point in white.
+In 3D mode, should select either key 1(bezier) or key 3(catmullRom)
+W and S : camera move in z axis
+A and D : camera move x axis
+Q and E : camera move y axis
+R camera rotates the points CCW So can add new points
+
+
