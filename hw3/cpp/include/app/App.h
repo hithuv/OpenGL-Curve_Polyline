@@ -20,6 +20,13 @@ public:
 
     void run();
 
+    enum class RenderMode {
+        Wireframe = 0,
+        Flat = 1,
+        Smooth = 2
+    };
+
+
 private:
     static void cursorPosCallback(GLFWwindow *, double, double);
     static void framebufferSizeCallback(GLFWwindow *, int, int);
@@ -49,6 +56,8 @@ private:
 
     // Objects to render.
     std::vector<std::unique_ptr<Renderable>> shapes;
+    std::unique_ptr<Renderable> tetrahedron;
+    std::unique_ptr<Renderable> axes;
 
     // Viewing
     Camera camera {{0.0f, 0.0f, 10.0f}};
@@ -72,6 +81,12 @@ private:
     // (while lastMouseLeftClickPos, if there is one, remains the original value).
     glm::dvec2 lastMouseLeftClickPos {0.0, 0.0};
     glm::dvec2 lastMouseLeftPressPos {0.0, 0.0};
+
+
+    /// @brief: User defined variables ////
+    bool renderAxes = false;
+    RenderMode currentRenderMode = RenderMode::Smooth;
+
 };
 
 

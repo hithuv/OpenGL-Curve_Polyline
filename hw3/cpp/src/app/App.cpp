@@ -62,7 +62,22 @@ void App::framebufferSizeCallback(GLFWwindow * window, int width, int height)
 
 void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, int mods)
 {
+    App & app = *reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
 
+    if (action == GLFW_RELEASE){
+        if(key == GLFW_KEY_F1){
+            app.currentRenderMode = RenderMode::Wireframe;
+        }
+        else if(key == GLFW_KEY_F2){
+            app.currentRenderMode = RenderMode::Flat;
+        }
+        else if(key == GLFW_KEY_F4){
+            app.currentRenderMode = RenderMode::Smooth;
+        }
+        else if(key == GLFW_KEY_X){
+            app.renderAxes = !app.renderAxes;
+        }
+    }
 }
 
 
@@ -221,6 +236,25 @@ void App::initializeShadersAndObjects()
                     glm::mat4(1.0f)
             )
     );
+
+    axes = std::make_unique<Line>(
+            pLineShader.get(),
+            std::vector<Line::Vertex> {
+                    {{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+                    {{10.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+                    {{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+                    {{0.0f, 10.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+                    {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+                    {{0.0f, 0.0f, 10.0f}, {0.0f, 0.0f, 1.0f}},
+            },
+            glm::mat4(1.0f)
+    );
+
+    tetrahedron = std::make_unique<Tetrahedron>(
+            pMeshShader.get(),
+            "var/tetrahedron.txt",
+            glm::translate(glm::mat4(1.0f), {2.0f, 0.0f, 0.0f})
+    );
 }
 
 
@@ -254,8 +288,26 @@ void App::render()
     pSphereShader->setVec3("lightColor", lightColor);
 
     // Render.
-    for (auto & s : shapes)
+    // for (auto & s : shapes)
+    // {
+    //     s->render(t);
+    // }
+
+    if(renderAxes)
     {
-        s->render(t);
+        axes->render(t);
     }
+    if(currentRenderMode == RenderMode::Wireframe){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else if(currentRenderMode == RenderMode::Flat){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+    else if(currentRenderMode == RenderMode::Smooth){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+    tetrahedron->render(t);
 }
