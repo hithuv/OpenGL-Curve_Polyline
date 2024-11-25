@@ -33,12 +33,16 @@ set(SHAPE
         include/shape/Renderable.h
         include/shape/Sphere.h
         include/shape/Tetrahedron.h
+        include/shape/Icosahedron.h
+        include/shape/Ellipsoid.h
         src/shape/GLShape.cpp
         src/shape/Line.cpp
         src/shape/Mesh.cpp
         src/shape/Renderable.cpp
         src/shape/Sphere.cpp
         src/shape/Tetrahedron.cpp
+        src/shape/Icosahedron.cpp
+        src/shape/Ellipsoid.cpp
 )
 
 set(ALL_INCLUDE_DIRS

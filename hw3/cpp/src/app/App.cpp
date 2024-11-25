@@ -6,6 +6,8 @@
 #include "shape/Mesh.h"
 #include "shape/Sphere.h"
 #include "shape/Tetrahedron.h"
+#include "shape/Icosahedron.h"
+#include "shape/Ellipsoid.h"
 #include "util/Shader.h"
 
 
@@ -64,20 +66,44 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
 {
     App & app = *reinterpret_cast<App *>(glfwGetWindowUserPointer(window));
 
-    if (action == GLFW_RELEASE){
-        if(key == GLFW_KEY_F1){
-            app.currentRenderMode = RenderMode::Wireframe;
-        }
-        else if(key == GLFW_KEY_F2){
-            app.currentRenderMode = RenderMode::Flat;
-        }
-        else if(key == GLFW_KEY_F4){
-            app.currentRenderMode = RenderMode::Smooth;
-        }
-        else if(key == GLFW_KEY_X){
-            app.renderAxes = !app.renderAxes;
+    if(key == GLFW_KEY_1 || key == GLFW_KEY_2 || key == GLFW_KEY_3 || key == GLFW_KEY_4
+        || key == GLFW_KEY_5 || key == GLFW_KEY_6 || key == GLFW_KEY_7 || key == GLFW_KEY_8 || key == GLFW_KEY_9 || key == GLFW_KEY_0){
+        app.userMode = key - GLFW_KEY_0;
+        return;
+    }
+
+    if(key == GLFW_KEY_X && action == GLFW_PRESS){
+        app.renderAxes = !app.renderAxes;
+        return;
+    }
+
+    if(app.userMode == 1){
+        if (action == GLFW_PRESS){
+            if(key == GLFW_KEY_F1){
+                app.currentRenderMode = RenderMode::Wireframe;
+            }
+            else if(key == GLFW_KEY_F2){
+                app.currentRenderMode = RenderMode::Flat;
+            }
+            else if(key == GLFW_KEY_F4){
+                app.currentRenderMode = RenderMode::Smooth;
+            }
         }
     }
+    else if(app.userMode == 2){
+        if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        {
+            app.icosahedron->subdivide();
+        }
+    }
+    else if(app.userMode == 3){
+        if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        {
+            app.ellipsoid->subdivide();
+        }
+    }
+
+    
 }
 
 
@@ -255,6 +281,45 @@ void App::initializeShadersAndObjects()
             "var/tetrahedron.txt",
             glm::translate(glm::mat4(1.0f), {2.0f, 0.0f, 0.0f})
     );
+
+    cube = std::make_unique<Tetrahedron>(
+            pMeshShader.get(),
+            "var/cube.txt",
+            glm::translate(glm::mat4(1.0f), {4.0f, 0.0f, 0.0f})
+    );
+
+    octahedron = std::make_unique<Tetrahedron>(
+            pMeshShader.get(),
+            "var/octahedron.txt",
+            glm::translate(glm::mat4(1.0f), {3.0f, 2.0f, 0.0f})
+    );
+
+    icosahedron = std::make_unique<Icosahedron>(
+            pMeshShader.get(),
+            "var/icosahedron.txt",
+            glm::translate(glm::mat4(1.0f), {1.0f, 2.0f, 0.0f})
+    );
+
+    // Example scaling factors for the ellipsoid
+    // float scaleX = 2.0f; // Scale along the x-axis
+    // float scaleY = 1.0f; // Scale along the y-axis
+    // float scaleZ = 0.5f; // Scale along the z-axis
+
+    // Define the model matrix with scaling for the ellipsoid
+    glm::mat4 ellipsoidModel = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 2.0f, 0.0f));
+    ellipsoidModel = glm::scale(ellipsoidModel, glm::vec3(2.0f, 1.0f, 0.5f)); // Example scaling factors
+
+    // Instantiate Ellipsoid with corrected arguments
+    ellipsoid = std::make_unique<Ellipsoid>(
+        pMeshShader.get(),                             // Shader*
+        std::string("var/icosahedron.txt"),       // std::string
+        ellipsoidModel                           // glm::mat4
+    );
+
+
+
+
+
 }
 
 
@@ -300,14 +365,30 @@ void App::render()
     if(currentRenderMode == RenderMode::Wireframe){
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
-    else if(currentRenderMode == RenderMode::Flat){
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // else if(currentRenderMode == RenderMode::Flat){
+    //     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    //     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    //     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    //     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // }
+    // else if(currentRenderMode == RenderMode::Smooth){
+    //     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // }
+    // if (currentRenderMode == RenderMode::Flat) {
+    //     pMeshShader->setInt("displayMode", 1); // Flat
+    // } else if (currentRenderMode == RenderMode::Smooth) {
+    //     pMeshShader->setInt("displayMode", 2); // Flat
+    // }
+
+    if(userMode == 1){
+        tetrahedron->render(t);
+        cube->render(t);
+        octahedron->render(t);
     }
-    else if(currentRenderMode == RenderMode::Smooth){
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    else if(userMode == 2){
+        icosahedron->render(t);
     }
-    tetrahedron->render(t);
+    else if(userMode == 3){
+        ellipsoid->render(t);
+    }
 }

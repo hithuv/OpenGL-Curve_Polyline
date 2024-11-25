@@ -7,6 +7,8 @@
 
 #include "app/Window.h"
 #include "util/Camera.h"
+#include "shape/Icosahedron.h"
+#include "shape/Ellipsoid.h"
 
 
 class Shader;
@@ -57,6 +59,10 @@ private:
     // Objects to render.
     std::vector<std::unique_ptr<Renderable>> shapes;
     std::unique_ptr<Renderable> tetrahedron;
+    std::unique_ptr<Renderable> cube;
+    std::unique_ptr<Renderable> octahedron;
+    std::unique_ptr<Icosahedron> icosahedron;
+    std::unique_ptr<Ellipsoid> ellipsoid;
     std::unique_ptr<Renderable> axes;
 
     // Viewing
@@ -86,6 +92,7 @@ private:
     /// @brief: User defined variables ////
     bool renderAxes = false;
     RenderMode currentRenderMode = RenderMode::Smooth;
+    int userMode = 1;
 
 };
 
