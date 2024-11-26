@@ -10,6 +10,13 @@
 #include "shape/Ellipsoid.h"
 #include "util/Shader.h"
 
+/*
+Part 1: Smooth shading did not work.
+Part 2,3,4 okay. Can top subdivide after two subdivisions!
+Part 5 torus is rendered, but 15 x 15 points, 30 x 30 triangles. features should be implemented
+
+*/
+
 
 App & App::getInstance()
 {
@@ -323,6 +330,7 @@ void App::initializeShadersAndObjects()
         glm::vec3(3.0f, 2.f, 3.0f),      // Center
         1.0f,                               // Radius
         0.0f,                               // Height (not used for sphere)
+        0.0f,                               // Major Radius (not used for sphere)
         glm::vec3(0.31f, 0.5f, 1.0f),       // Color (Red)
         glm::mat4(1.0f)                     // Model Matrix
     );
@@ -334,6 +342,7 @@ void App::initializeShadersAndObjects()
         glm::vec3(0.0f, 0.0f, 0.0f),       // Center
         1.0f,                               // Radius
         2.0f,                               // Height
+        0.0f,                               // Major Radius (not used for cylinder)
         glm::vec3(0.31f, 0.5f, 1.0f),       // Color (Green)
         glm::mat4(1.0f)                     // Model Matrix
     );
@@ -345,13 +354,28 @@ void App::initializeShadersAndObjects()
         glm::vec3(3.0f, 0.0f, 0.0f),       // Center
         1.0f,                               // Radius
         2.0f,                               // Height
+        0.0f,                               // Major Radius (not used for cone)
         glm::vec3(0.31f, 0.5f, 1.0f),       // Color (Blue)
         glm::mat4(1.0f)                     // Model Matrix
     );
 
+    // Parameters for the torus
+    glm::vec3 torusCenter(0.0f, 0.0f, 0.0f);     // Center at origin
+    float torusMinorRadius = 0.5f;               // Radius of the tube
+    float torusMajorRadius = 1.5f;               // Distance from center to tube
+    glm::vec3 torusColor(1.0f, 1.0f, 0.0f);       // color
+    glm::mat4 torusModel = glm::mat4(1.0f);      // No transformation
 
-
-
+    torus = std::make_unique<ParametricSurface>(
+        pSphereShader.get(),
+        SurfaceType::TORUS,
+        glm::vec3(0.0f, 0.0f, 0.0f),      // Center
+        0.5f,                             // Minor Radius (r)
+        0.0f,                             // Height (not used for Torus)
+        1.5f,                             // Major Radius (R)
+        glm::vec3(0.31f, 0.5f, 1.0f),      // Color
+        glm::mat4(1.0f)                    // Model Matrix
+    );
 
 
 
@@ -430,5 +454,8 @@ void App::render()
         sphere->render(t);
         cylinder->render(t);
         cone->render(t);
+    }
+    else if (userMode == 5){
+        torus->render(t);
     }
 }

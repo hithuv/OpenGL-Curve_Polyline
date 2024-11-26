@@ -1,3 +1,4 @@
+// ParametricSurface.cpp
 #include "shape/ParametricSurface.h"
 #include "util/Shader.h"
 #include <glad/glad.h> // Ensure GLAD is included and initialized
@@ -8,6 +9,7 @@ ParametricSurface::ParametricSurface(
     const glm::vec3& center,
     float radius,
     float height,
+    float majorRadius,
     const glm::vec3& color,
     const glm::mat4& model
 ) : Renderable(),
@@ -16,6 +18,7 @@ ParametricSurface::ParametricSurface(
     center(center),
     radius(radius),
     height(height),
+    majorRadius(majorRadius),
     color(color)
 {
     glBindVertexArray(vao);
@@ -40,7 +43,8 @@ void ParametricSurface::render(float timeElapsedSinceLastFrame)
     pShader->setMat4("model", model);
     pShader->setVec3("center", center);
     pShader->setFloat("radius", radius);
-    pShader->setFloat("height", height); // Set height for cylinder and cone
+    pShader->setFloat("height", height);
+    pShader->setFloat("majorRadius", majorRadius); // Only relevant for torus
     pShader->setVec3("color", color);
     pShader->setInt("surfaceType", static_cast<int>(surfaceType));
 

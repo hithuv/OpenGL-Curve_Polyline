@@ -11,12 +11,12 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-// Add the missing uniform declarations
-uniform int surfaceType;    // To determine which surface to render
-uniform float height;       // Applicable for cylinder and cone
-
+// Uniforms for surface parameters
+uniform int surfaceType;       // 0: Sphere, 1: Cylinder, 2: Cone, 3: Torus
+uniform float height;          // Applicable for Cylinder and Cone
+uniform float majorRadius;     // Applicable for Torus
 uniform vec3 center;
-uniform float radius;
+uniform float radius;          // Minor radius for Torus, or radius for Sphere and Cylinder
 uniform vec3 color;
 
 const float kPi = 3.14159265358979323846f;
@@ -30,6 +30,7 @@ void main()
     float v = gl_TessCoord.y;
 
     float phi = 2.0f * kPi * u;
+    float theta = 2.0f * kPi * v;
 
     vec3 pos;
     vec3 normal;
@@ -37,11 +38,11 @@ void main()
     if (surfaceType == 0)
     {
         // Sphere parameters
-        float theta = kPi * v;
-        pos = center + vec3(radius * sin(theta) * cos(phi),
-                           radius * sin(theta) * sin(phi),
-                           radius * cos(theta));
-        normal = normalize(vec3(model * vec4(pos, 0.0f)));
+        float thetaSphere = kPi * v;
+        pos = center + vec3(radius * sin(thetaSphere) * cos(phi),
+                           radius * sin(thetaSphere) * sin(phi),
+                           radius * cos(thetaSphere));
+        normal = normalize(vec3(model * vec4(pos - center, 0.0f)));
     }
     else if (surfaceType == 1)
     {
@@ -65,6 +66,21 @@ void main()
         normal = normalize(vec3(radius * cos(phi),
                                  slope,
                                  radius * sin(phi)));
+    }
+    else if (surfaceType == 3)
+    {
+        // Torus parameters
+        float R = majorRadius; // Major radius
+        float r = radius;       // Minor radius
+
+        pos = center + vec3((R + r * cos(phi)) * cos(theta),
+                           r * sin(phi),
+                           (R + r * cos(phi)) * sin(theta));
+
+        // Compute normals
+        normal = normalize(vec3(cos(phi) * cos(theta),
+                                 sin(phi),
+                                 cos(phi) * sin(theta)));
     }
 
     gl_Position = projection * view * model * vec4(pos, 1.0f);

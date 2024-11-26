@@ -68,6 +68,7 @@ private:
     std::unique_ptr<ParametricSurface> sphere;
     std::unique_ptr<ParametricSurface> cylinder;
     std::unique_ptr<ParametricSurface> cone;
+    std::unique_ptr<ParametricSurface> torus;
 
     // Viewing
     Camera camera {{0.0f, 0.0f, 10.0f}};
