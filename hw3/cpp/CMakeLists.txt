@@ -35,6 +35,7 @@ set(SHAPE
         include/shape/Tetrahedron.h
         include/shape/Icosahedron.h
         include/shape/Ellipsoid.h
+        include/shape/ParametricSurface.h
         src/shape/GLShape.cpp
         src/shape/Line.cpp
         src/shape/Mesh.cpp
@@ -43,6 +44,7 @@ set(SHAPE
         src/shape/Tetrahedron.cpp
         src/shape/Icosahedron.cpp
         src/shape/Ellipsoid.cpp
+        src/shape/ParametricSurface.cpp
 )
 
 set(ALL_INCLUDE_DIRS

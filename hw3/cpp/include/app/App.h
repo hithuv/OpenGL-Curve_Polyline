@@ -9,6 +9,7 @@
 #include "util/Camera.h"
 #include "shape/Icosahedron.h"
 #include "shape/Ellipsoid.h"
+#include "shape/ParametricSurface.h"
 
 
 class Shader;
@@ -64,6 +65,9 @@ private:
     std::unique_ptr<Icosahedron> icosahedron;
     std::unique_ptr<Ellipsoid> ellipsoid;
     std::unique_ptr<Renderable> axes;
+    std::unique_ptr<ParametricSurface> sphere;
+    std::unique_ptr<ParametricSurface> cylinder;
+    std::unique_ptr<ParametricSurface> cone;
 
     // Viewing
     Camera camera {{0.0f, 0.0f, 10.0f}};

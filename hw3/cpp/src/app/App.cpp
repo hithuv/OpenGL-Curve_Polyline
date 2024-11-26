@@ -316,6 +316,41 @@ void App::initializeShadersAndObjects()
         ellipsoidModel                           // glm::mat4
     );
 
+    // Sphere
+    sphere = std::make_unique<ParametricSurface>(
+        pSphereShader.get(),
+        SurfaceType::SPHERE,
+        glm::vec3(3.0f, 2.f, 3.0f),      // Center
+        1.0f,                               // Radius
+        0.0f,                               // Height (not used for sphere)
+        glm::vec3(0.31f, 0.5f, 1.0f),       // Color (Red)
+        glm::mat4(1.0f)                     // Model Matrix
+    );
+
+    // Cylinder
+    cylinder = std::make_unique<ParametricSurface>(
+        pSphereShader.get(),
+        SurfaceType::CYLINDER,
+        glm::vec3(0.0f, 0.0f, 0.0f),       // Center
+        1.0f,                               // Radius
+        2.0f,                               // Height
+        glm::vec3(0.31f, 0.5f, 1.0f),       // Color (Green)
+        glm::mat4(1.0f)                     // Model Matrix
+    );
+
+    // Cone
+    cone = std::make_unique<ParametricSurface>(
+        pSphereShader.get(),
+        SurfaceType::CONE,
+        glm::vec3(3.0f, 0.0f, 0.0f),       // Center
+        1.0f,                               // Radius
+        2.0f,                               // Height
+        glm::vec3(0.31f, 0.5f, 1.0f),       // Color (Blue)
+        glm::mat4(1.0f)                     // Model Matrix
+    );
+
+
+
 
 
 
@@ -390,5 +425,10 @@ void App::render()
     }
     else if(userMode == 3){
         ellipsoid->render(t);
+    }
+    else if (userMode == 4){
+        sphere->render(t);
+        cylinder->render(t);
+        cone->render(t);
     }
 }
