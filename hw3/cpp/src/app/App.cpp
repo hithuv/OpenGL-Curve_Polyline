@@ -365,15 +365,15 @@ void App::render()
     if(currentRenderMode == RenderMode::Wireframe){
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
-    // else if(currentRenderMode == RenderMode::Flat){
-    //     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    //     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    //     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    //     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    // }
-    // else if(currentRenderMode == RenderMode::Smooth){
-    //     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    // }
+    else if(currentRenderMode == RenderMode::Flat){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+    else if(currentRenderMode == RenderMode::Smooth){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
     // if (currentRenderMode == RenderMode::Flat) {
     //     pMeshShader->setInt("displayMode", 1); // Flat
     // } else if (currentRenderMode == RenderMode::Smooth) {
