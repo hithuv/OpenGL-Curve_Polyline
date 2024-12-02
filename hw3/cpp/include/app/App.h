@@ -10,6 +10,7 @@
 #include "shape/Icosahedron.h"
 #include "shape/Ellipsoid.h"
 #include "shape/ParametricSurface.h"
+#include "shape/Dodecahedron.h"
 
 
 class Shader;
@@ -63,6 +64,7 @@ private:
     std::unique_ptr<Renderable> cube;
     std::unique_ptr<Renderable> octahedron;
     std::unique_ptr<Icosahedron> icosahedron;
+    std::unique_ptr<Dodecahedron> dodecahedron;
     std::unique_ptr<Ellipsoid> ellipsoid;
     std::unique_ptr<Renderable> axes;
     std::unique_ptr<ParametricSurface> sphere;

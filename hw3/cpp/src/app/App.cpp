@@ -109,6 +109,12 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
             app.ellipsoid->subdivide();
         }
     }
+    else if(app.userMode == 6){
+        if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        {
+            app.dodecahedron->subdivide();
+        }
+    }
 
     
 }
@@ -307,6 +313,12 @@ void App::initializeShadersAndObjects()
             glm::translate(glm::mat4(1.0f), {1.0f, 2.0f, 0.0f})
     );
 
+    dodecahedron = std::make_unique<Dodecahedron>(
+            pMeshShader.get(),
+            "var/dodecahedron.txt",
+            glm::translate(glm::mat4(1.0f), {1.0f, 2.0f, 0.0f})
+    );
+
     // Example scaling factors for the ellipsoid
     // float scaleX = 2.0f; // Scale along the x-axis
     // float scaleY = 1.0f; // Scale along the y-axis
@@ -457,5 +469,8 @@ void App::render()
     }
     else if (userMode == 5){
         torus->render(t);
+    }
+    else if (userMode == 6){
+        dodecahedron->render(t);
     }
 }
