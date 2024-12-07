@@ -11,6 +11,7 @@
 #include "shape/Ellipsoid.h"
 #include "shape/ParametricSurface.h"
 #include "shape/Dodecahedron.h"
+#include "shape/SuperQuadric.h"
 
 
 class Shader;
@@ -57,6 +58,7 @@ private:
     std::unique_ptr<Shader> pLineShader;
     std::unique_ptr<Shader> pMeshShader;
     std::unique_ptr<Shader> pSphereShader;
+    std::unique_ptr<Shader> pSuperQuadricShader;
 
     // Objects to render.
     std::vector<std::unique_ptr<Renderable>> shapes;
@@ -71,6 +73,8 @@ private:
     std::unique_ptr<ParametricSurface> cylinder;
     std::unique_ptr<ParametricSurface> cone;
     std::unique_ptr<ParametricSurface> torus;
+    std::unique_ptr<SuperQuadric> superEllipsoid;
+    std::unique_ptr<SuperQuadric> superToroid;
 
     // Viewing
     Camera camera {{0.0f, 0.0f, 10.0f}};

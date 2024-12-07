@@ -228,6 +228,14 @@ void App::initializeShadersAndObjects()
                                              "src/shader/sphere.tese.glsl",
                                              "src/shader/phong.frag.glsl");
 
+    std::cout<<"Hello\n";
+    pSuperQuadricShader = std::make_unique<Shader>("src/shader/sphere.vert.glsl",
+                                                   "src/shader/sphere.tesc.glsl",
+                                                   "src/shader/superQuadric.tese.glsl",
+                                                   "src/shader/phong.frag.glsl");
+
+    std::cout<<"Hello Again\n";
+    
     shapes.emplace_back(
             std::make_unique<Line>(
                     pLineShader.get(),
@@ -389,6 +397,30 @@ void App::initializeShadersAndObjects()
         glm::mat4(1.0f)                    // Model Matrix
     );
 
+    superEllipsoid = std::make_unique<SuperQuadric>(
+        pSuperQuadricShader.get(),
+        SuperSurfaceType::SUPER_ELLIPSOID,
+        glm::vec3(0.0f, 0.0f, 0.0f),  // Center
+        1.0f,                          // Radius
+        0.0f,                          // Height (not used for super-ellipsoid)
+        0.0f,                          // Major radius (not used for super-ellipsoid)
+        glm::vec3(1.0f, 0.5f, 0.0f),   // Color (Orange)
+        1.0f, 1.0f, 1.0f, 2.0f, 2.0f, // Super-Ellipsoid parameters (a, b, c, m, n)
+        glm::mat4(1.0f)                // Model Matrix
+    );
+
+    // Super-Toroid
+    superToroid = std::make_unique<SuperQuadric>(
+        pSuperQuadricShader.get(),
+        SuperSurfaceType::SUPER_TOROID,
+        glm::vec3(3.0f, 0.0f, 0.0f),  // Center
+        1.0f,                          // Radius
+        0.0f,                          // Height (not used for toroid)
+        3.0f,                          // Major Radius
+        glm::vec3(0.31f, 0.5f, 1.0f),  // Color (Blue)
+        1.0f, 1.0f, 1.0f, 2.0f, 2.0f, // Super-Toroid parameters (a, b, c, m, n)
+        glm::mat4(1.0f)                // Model Matrix
+    );
 
 
 }
@@ -472,5 +504,12 @@ void App::render()
     }
     else if (userMode == 6){
         dodecahedron->render(t);
+    }
+    else if (userMode == 7){
+        // std::cout<<"Rendering Super Ellipsoid\n";
+        superEllipsoid->render(t);
+    }
+    else if (userMode == 8){
+        superToroid->render(t);
     }
 }

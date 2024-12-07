@@ -37,6 +37,7 @@ set(SHAPE
         include/shape/Ellipsoid.h
         include/shape/ParametricSurface.h
         include/shape/Dodecahedron.h
+        include/shape/SuperQuadric.h
         src/shape/GLShape.cpp
         src/shape/Line.cpp
         src/shape/Mesh.cpp
@@ -47,6 +48,7 @@ set(SHAPE
         src/shape/Ellipsoid.cpp
         src/shape/ParametricSurface.cpp
         src/shape/Dodecahedron.cpp
+        src/shape/SuperQuadric.cpp
 )
 
 set(ALL_INCLUDE_DIRS
