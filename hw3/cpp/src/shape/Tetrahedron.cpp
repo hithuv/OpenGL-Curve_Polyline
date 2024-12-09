@@ -7,7 +7,8 @@
 Tetrahedron::Tetrahedron(
         Shader * pShader,
         const std::string & vertexFile,
-        const glm::mat4 & model
+        const glm::mat4 & model,
+        const glm::vec3& color
 )
         : Mesh(pShader, model)
 {
@@ -21,9 +22,9 @@ Tetrahedron::Tetrahedron(
         while (fin >> v1.x >> v1.y >> v1.z >> v2.x >> v2.y >> v2.z >> v3.x >> v3.y >> v3.z)
         {
             glm::vec3 fn = glm::normalize(glm::cross(v2 - v1, v3 - v2));
-            vertices.emplace_back(v1, fn, kColor);
-            vertices.emplace_back(v2, fn, kColor);
-            vertices.emplace_back(v3, fn, kColor);
+            vertices.emplace_back(v1, fn, color);
+            vertices.emplace_back(v2, fn, color);
+            vertices.emplace_back(v3, fn, color);
         }
     }
     else

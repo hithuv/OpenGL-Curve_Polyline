@@ -75,9 +75,23 @@ private:
     std::unique_ptr<ParametricSurface> torus;
     std::unique_ptr<SuperQuadric> superEllipsoid;
     std::unique_ptr<SuperQuadric> superToroid;
+    std::unique_ptr<Renderable> ground;
+
+    std::unique_ptr<Renderable> tetrahedron1;
+    std::unique_ptr<Renderable> cube1;
+    std::unique_ptr<Renderable> octahedron1;
+    std::unique_ptr<Icosahedron> icosahedron1;
+    std::unique_ptr<Dodecahedron> dodecahedron1;
+    std::unique_ptr<Ellipsoid> ellipsoid1;
+    std::unique_ptr<ParametricSurface> sphere1;
+    std::unique_ptr<ParametricSurface> cylinder1;
+    std::unique_ptr<ParametricSurface> cone1;
+    std::unique_ptr<ParametricSurface> torus1;
+
+
 
     // Viewing
-    Camera camera {{2.0f, 0.0f, 12.0f}};
+    Camera camera {{2.0f, 2.0f, 12.0f}};
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 projection = glm::mat4(1.0f);
 

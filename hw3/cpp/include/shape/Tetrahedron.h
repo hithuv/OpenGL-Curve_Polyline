@@ -14,7 +14,7 @@ class Shader;
 class Tetrahedron : public Mesh
 {
 public:
-    Tetrahedron(Shader * pShader, const std::string & vertexFile, const glm::mat4 & model);
+    Tetrahedron(Shader * pShader, const std::string & vertexFile, const glm::mat4 & model, const glm::vec3& color = kColor);
 
     ~Tetrahedron() noexcept override = default;
 

@@ -10,13 +10,6 @@
 #include "shape/Ellipsoid.h"
 #include "util/Shader.h"
 
-/*
-Part 1: Smooth shading did not work.
-Part 2,3,4 okay. Can top subdivide after two subdivisions!
-Part 5 torus is rendered, but 15 x 15 points, 30 x 30 triangles. features should be implemented
-
-*/
-
 
 App & App::getInstance()
 {
@@ -98,21 +91,93 @@ void App::keyCallback(GLFWwindow * window, int key, int scancode, int action, in
         }
     }
     else if(app.userMode == 2){
+        if (action == GLFW_PRESS){
+            if(key == GLFW_KEY_F1){
+                app.currentRenderMode = RenderMode::Wireframe;
+            }
+            else if(key == GLFW_KEY_F2){
+                app.currentRenderMode = RenderMode::Flat;
+            }
+            else if(key == GLFW_KEY_F4){
+                app.currentRenderMode = RenderMode::Smooth;
+            }
+        }
         if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         {
             app.icosahedron->subdivide();
         }
     }
     else if(app.userMode == 3){
+        if (action == GLFW_PRESS){
+            if(key == GLFW_KEY_F1){
+                app.currentRenderMode = RenderMode::Wireframe;
+            }
+            else if(key == GLFW_KEY_F2){
+                app.currentRenderMode = RenderMode::Flat;
+            }
+            else if(key == GLFW_KEY_F4){
+                app.currentRenderMode = RenderMode::Smooth;
+            }
+        }
         if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         {
             app.ellipsoid->subdivide();
         }
     }
+    else if(app.userMode == 4){
+        if (action == GLFW_PRESS){
+            if(key == GLFW_KEY_F1){
+                app.currentRenderMode = RenderMode::Wireframe;
+            }
+            else if(key == GLFW_KEY_F2){
+                app.currentRenderMode = RenderMode::Flat;
+            }
+            else if(key == GLFW_KEY_F4){
+                app.currentRenderMode = RenderMode::Smooth;
+            }
+        }
+    }
+    else if(app.userMode == 5){
+        if (action == GLFW_PRESS){
+            if(key == GLFW_KEY_F1){
+                app.currentRenderMode = RenderMode::Wireframe;
+            }
+            else if(key == GLFW_KEY_F2){
+                app.currentRenderMode = RenderMode::Flat;
+            }
+            else if(key == GLFW_KEY_F4){
+                app.currentRenderMode = RenderMode::Smooth;
+            }
+        }
+    }
     else if(app.userMode == 6){
+        if (action == GLFW_PRESS){
+            if(key == GLFW_KEY_F1){
+                app.currentRenderMode = RenderMode::Wireframe;
+            }
+            else if(key == GLFW_KEY_F2){
+                app.currentRenderMode = RenderMode::Flat;
+            }
+            else if(key == GLFW_KEY_F4){
+                app.currentRenderMode = RenderMode::Smooth;
+            }
+        }
         if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         {
             app.dodecahedron->subdivide();
+        }
+    }
+    else if(app.userMode == 7){
+        if (action == GLFW_PRESS){
+            if(key == GLFW_KEY_F1){
+                app.currentRenderMode = RenderMode::Wireframe;
+            }
+            else if(key == GLFW_KEY_F2){
+                app.currentRenderMode = RenderMode::Flat;
+            }
+            else if(key == GLFW_KEY_F4){
+                app.currentRenderMode = RenderMode::Smooth;
+            }
         }
     }
 
@@ -324,7 +389,7 @@ void App::initializeShadersAndObjects()
     dodecahedron = std::make_unique<Dodecahedron>(
             pMeshShader.get(),
             "var/dodecahedron.txt",
-            glm::translate(glm::mat4(1.0f), {1.0f, 2.0f, 0.0f})
+            glm::translate(glm::mat4(1.0f), {2.0f, 3.0f, 0.0f})
     );
 
     // Example scaling factors for the ellipsoid
@@ -379,13 +444,6 @@ void App::initializeShadersAndObjects()
         glm::mat4(1.0f)                     // Model Matrix
     );
 
-    // Parameters for the torus
-    glm::vec3 torusCenter(0.0f, 0.0f, 0.0f);     // Center at origin
-    float torusMinorRadius = 0.5f;               // Radius of the tube
-    float torusMajorRadius = 1.5f;               // Distance from center to tube
-    glm::vec3 torusColor(1.0f, 1.0f, 0.0f);       // color
-    glm::mat4 torusModel = glm::mat4(1.0f);      // No transformation
-
     torus = std::make_unique<ParametricSurface>(
         pSphereShader.get(),
         SurfaceType::TORUS,
@@ -413,13 +471,116 @@ void App::initializeShadersAndObjects()
     superToroid = std::make_unique<SuperQuadric>(
         pSuperQuadricShader.get(),
         SuperSurfaceType::SUPER_TOROID,
-        glm::vec3(0.0f, 0.0f, 0.0f),  // Center
+        glm::vec3(1.0f, 0.0f, 0.0f),  // Center
         1.0f,                          // Radius
         3.0f,                          // Height (not used for toroid)
         3.0f,                          // Major Radius
         glm::vec3(0.31f, 0.5f, 1.0f),  // Color (Blue)
         1.0f, 1.0f, 1.0f, 2.0f, 2.0f, // Super-Toroid parameters (a, b, c, m, n)
         glm::mat4(1.0f)                // Model Matrix
+    );
+
+    // Scale the cuboid to 100x100 and 1 in the y-axis
+    glm::mat4 model2 = glm::mat4(1.0f);
+    model2 = glm::scale(model2, glm::vec3(100.0f, 1.0f, 100.0f)); // Scale x, y, and z dimensions
+
+    // Translate so that the top face lies in the x-z plane with the origin at the center of the top face
+    model2 = glm::translate(model2, glm::vec3(0.0f, -0.5f, 0.0f)); // Translate up by 0.5 on the y-axis
+
+    // Create the cuboid (or your object, here Tetrahedron is just an example name)
+    ground = std::make_unique<Tetrahedron>(
+            pMeshShader.get(),
+            "var/cube.txt",
+            model2,
+            glm::vec3(0.0f, 0.5f, 0.0f) // Color
+    );
+
+    tetrahedron1 = std::make_unique<Tetrahedron>(
+            pMeshShader.get(),
+            "var/tetrahedron.txt",
+            glm::translate(glm::mat4(1.0f), {-1.0f, 0.0f, -2.5f})
+    );
+
+    cube1 = std::make_unique<Tetrahedron>(
+            pMeshShader.get(),
+            "var/cube.txt",
+            glm::translate(glm::mat4(1.0f), {6.0f, 0.0f, -1.0f})
+    );
+
+    octahedron1 = std::make_unique<Tetrahedron>(
+            pMeshShader.get(),
+            "var/octahedron.txt",
+            glm::translate(glm::mat4(1.0f), {-2.0f, 0.0f, 6.0f})
+    );
+
+    icosahedron1 = std::make_unique<Icosahedron>(
+            pMeshShader.get(),
+            "var/icosahedron.txt",
+            glm::translate(glm::mat4(1.0f), {6.0f, 0.0f, -5.0f})
+    );
+
+    dodecahedron1 = std::make_unique<Dodecahedron>(
+            pMeshShader.get(),
+            "var/dodecahedron.txt",
+            glm::translate(glm::mat4(1.0f), {-4.0f, 0.0f, 3.0f})
+    );
+
+    // Define the model matrix with scaling for the ellipsoid
+    glm::mat4 ellipsoidModel1 = glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 0.0f, -5.0f));
+    ellipsoidModel1 = glm::scale(ellipsoidModel, glm::vec3(2.0f, 1.0f, 1.5f)); // Example scaling factors
+
+    // Instantiate Ellipsoid with corrected arguments
+    ellipsoid1 = std::make_unique<Ellipsoid>(
+        pMeshShader.get(),                             // Shader*
+        std::string("var/icosahedron.txt"),       // std::string
+        ellipsoidModel1                           // glm::mat4
+    );
+
+    // Sphere
+    sphere1 = std::make_unique<ParametricSurface>(
+        pSphereShader.get(),
+        SurfaceType::SPHERE,
+        glm::vec3(-4.0f, -0.5f, -2.0f),      // Center
+        1.0f,                               // Radius
+        0.0f,                               // Height (not used for sphere)
+        0.0f,                               // Major Radius (not used for sphere)
+        glm::vec3(0.31f, 0.5f, 1.0f),       // Color (Red)
+        glm::mat4(1.0f)                     // Model Matrix
+    );
+
+    // Cylinder
+    cylinder1 = std::make_unique<ParametricSurface>(
+        pSphereShader.get(),
+        SurfaceType::CYLINDER,
+        glm::vec3(0.0f, 0.0f, -5.0f),       // Center
+        1.0f,                               // Radius
+        2.0f,                               // Height
+        0.0f,                               // Major Radius (not used for cylinder)
+        glm::vec3(0.31f, 0.5f, 1.0f),       // Color (Green)
+        glm::mat4(1.0f)                     // Model Matrix
+    );
+
+    // Cone
+    cone1 = std::make_unique<ParametricSurface>(
+        pSphereShader.get(),
+        SurfaceType::CONE,
+        glm::vec3(3.5f, 0.0f, 0.0f),       // Center
+        1.0f,                               // Radius
+        2.0f,                               // Height
+        0.0f,                               // Major Radius (not used for cone)
+        glm::vec3(0.31f, 0.5f, 1.0f),       // Color (Blue)
+        glm::mat4(1.0f)                     // Model Matrix
+    );
+
+    torus1 = std::make_unique<ParametricSurface>(
+        pSphereShader.get(),
+        SurfaceType::TORUS,
+        glm::vec3(0.0f, 0.0f, 0.0f),      // Center
+        0.5f,                             // Minor Radius (r)
+        0.0f,                             // Height (not used for Torus)
+        1.5f,                             // Major Radius (R)
+        glm::vec3(0.31f, 0.5f, 1.0f),      // Color
+        glm::mat4(1.0f)                    // Model Matrix
     );
 
 
@@ -476,13 +637,8 @@ void App::render()
     }
     else if(currentRenderMode == RenderMode::Flat){
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-    else if(currentRenderMode == RenderMode::Smooth){
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
+
     // if (currentRenderMode == RenderMode::Flat) {
     //     pMeshShader->setInt("displayMode", 1); // Flat
     // } else if (currentRenderMode == RenderMode::Smooth) {
@@ -510,12 +666,20 @@ void App::render()
     }
     else if (userMode == 6){
         dodecahedron->render(t);
-    }
-    else if (userMode == 7){
+        superToroid->render(t);
         superEllipsoid->render(t);
     }
-    else if (userMode == 8){
-        superToroid->render(t);
+    else if (userMode == 7){
+        ground->render(t);
+        tetrahedron1->render(t);
+        cube1->render(t);
+        octahedron1->render(t);
+        icosahedron1->render(t);
+        dodecahedron1->render(t);
+        sphere1->render(t);
+        cylinder1->render(t);
+        cone1->render(t);
+        torus1->render(t);
     }
 }
 
