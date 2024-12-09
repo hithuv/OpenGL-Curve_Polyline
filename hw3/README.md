@@ -1,10 +1,11 @@
 # HW3
 
-Your Name (Please replace with your name.)
+Srihith Bharadwaj Burra
 
-Your SBU ID (Please replace with your 9-digit SBU ID.)
+116728900
 
-Your Email (Please replace with your email.)
+srihithbharadw.burra@stonybrook.edu
+srburra@cs.stonybrook.edu
 
 ## Overview
 
@@ -16,7 +17,7 @@ Each line denotes a 3D point (x, y, and z coordinates), and each 3 lines denote 
 Note that many points are duplicated as they appear in multiple facets!
 
 ## Notes
-
+- Go into the hw3/cpp folder and run ./build_script.sh command
 - All README files for future homework should also comply with the same format as this one. 
 - This program template is just for your reference. Please feel free to code your own program (i.e., not using this template). However, the user interface (mouse and keyboard functionalities) should be the same as specified in the homework manual. 
 - Please submit either the C++ version or the Python version (but **not both**), and **comply with the submission requirements as detailed on the [TA Help Page](https://www3.cs.stonybrook.edu/~xihan1/courses/cse528/ta_help_page.html)**. Plesase cut and paste this README (together with your answers for the non-programming part) into either `cpp/` or `py/`, rename the directory as instructed by the TA Help Page, and submit via Brightspace. 
@@ -52,10 +53,7 @@ sudo reboot
   ```bash
   apt install libopencv-dev libglm-dev libglew-dev libglfw3-dev mesa-utils libx11-dev libxi-dev libxrandr-dev
   ```
-- Further Needed for the Python Version (from PyPI):
-```bash
-pip install numpy PyOpenGL PyGLM glfw
-```
+
 
 ## Compile & Run
 
@@ -68,11 +66,8 @@ make
 cd ..
 ./build/hw3
 ```
-- Python Version. Run inside `py/`, and replace "py3" with your own conda env name:
-```bash
-conda activate py3
-python main.py
-```
+
+
 
 ## Usage
 
@@ -94,59 +89,59 @@ Only features or parts checked here would be graded!
   - [x] Camera Functionalities
     - [x] Show/hide x, y, z Axes
     - [x] `W`/`S`/`A`/`D`/`UP`/`DOWN` Functionalities
-- [ ] **P1: Simple Polyhedral Objects**
-  - [ ] Tetrahedron
-    - [ ] Wireframe
-    - [ ] Flat
+- [x] **P1: Simple Polyhedral Objects**
+  - [x] Tetrahedron
+    - [x] Wireframe
+    - [x] Flat
     - [ ] Smooth
-  - [ ] Cube
-    - [ ] Wireframe
-    - [ ] Flat
+  - [x] Cube
+    - [x] Wireframe
+    - [x] Flat
     - [ ] Smooth
-  - [ ] Octahedron
-    - [ ] Wireframe
-    - [ ] Flat
+  - [x] Octahedron
+    - [x] Wireframe
+    - [x] Flat
     - [ ] Smooth
-- [ ] **P2: Icosahedron**
-  - [ ] Wireframe
-  - [ ] Flat
+- [x] **P2: Icosahedron**
+  - [x] Wireframe
+  - [x] Flat
   - [ ] Smooth
-  - [ ] Subdivision
-- [ ] **P3: Ellipsoid**
-  - [ ] Wireframe
-  - [ ] Flat
+  - [x] Subdivision
+- [x] **P3: Ellipsoid**
+  - [x] Wireframe
+  - [x] Flat
   - [ ] Smooth
-  - [ ] Subdivision
-- [ ] **P4: Tessellation**
-  - [ ] Sphere
-    - [ ] Wireframe
-    - [ ] Flat/Smooth
-  - [ ] Cylinder
-    - [ ] Wireframe
-    - [ ] Flat/Smooth
-  - [ ] Cone
-    - [ ] Wireframe
-    - [ ] Flat/Smooth
-- [ ] **P5: Torus**
-  - [ ] Wireframe
-  - [ ] Flat
+  - [x] Subdivision
+- [x] **P4: Tessellation**
+  - [x] Sphere
+    - [x] Wireframe
+    - [x] Flat/Smooth
+  - [x] Cylinder
+    - [x] Wireframe
+    - [x] Flat/Smooth
+  - [x] Cone
+    - [x] Wireframe
+    - [x] Flat/Smooth
+- [x] **P5: Torus**
+  - [x] Wireframe
+  - [x] Flat
   - [ ] Smooth
-  - [ ] Subdivision
-- [ ] **P6: Super-quqdrics And Dodecahedron**
-  - [ ] Super-quqdrics
-    - [ ] Wireframe
-    - [ ] Flat/Smooth
+  - [x] Subdivision
+- [x] **P6: Super-quqdrics And Dodecahedron**
+  - [x] Super-quqdrics
+    - [x] Wireframe
+    - [x] Flat/Smooth
     - [ ] Dynamically Load Parameters
-  - [ ] Dodecahedron
-    - [ ] Wireframe
-    - [ ] Flat
+  - [x] Dodecahedron
+    - [x] Wireframe
+    - [x] Flat
     - [ ] Smooth
-    - [ ] Subdivision
+    - [x] Subdivision
 - [ ] **P7: Flight Simulation**
-  - [ ] City Scene Assembly (Has 8-12 urban structures)
-  - [ ] Display
-    - [ ] Wireframe
-    - [ ] Flat
+  - [x] City Scene Assembly (Has 8-12 urban structures)
+  - [x] Display
+    - [x] Wireframe
+    - [x] Flat
     - [ ] Smooth
   - [ ] Loops
     - [ ] Horizontal Loop
