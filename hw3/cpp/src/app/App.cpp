@@ -347,7 +347,7 @@ void App::initializeShadersAndObjects()
     sphere = std::make_unique<ParametricSurface>(
         pSphereShader.get(),
         SurfaceType::SPHERE,
-        glm::vec3(3.0f, 2.f, 3.0f),      // Center
+        glm::vec3(2.0f, 3.0f, 0.0f),      // Center
         1.0f,                               // Radius
         0.0f,                               // Height (not used for sphere)
         0.0f,                               // Major Radius (not used for sphere)
@@ -401,9 +401,9 @@ void App::initializeShadersAndObjects()
         pSuperQuadricShader.get(),
         SuperSurfaceType::SUPER_ELLIPSOID,
         glm::vec3(0.0f, 0.0f, 0.0f),  // Center
-        1.0f,                          // Radius
-        0.0f,                          // Height (not used for super-ellipsoid)
-        0.0f,                          // Major radius (not used for super-ellipsoid)
+        1.0f,                          // Minor Radius
+        5.0f,                          // Height (not used for super-ellipsoid)
+        3.0f,                          // Major radius (not used for super-ellipsoid)
         glm::vec3(1.0f, 0.5f, 0.0f),   // Color (Orange)
         1.0f, 1.0f, 1.0f, 2.0f, 2.0f, // Super-Ellipsoid parameters (a, b, c, m, n)
         glm::mat4(1.0f)                // Model Matrix
@@ -413,9 +413,9 @@ void App::initializeShadersAndObjects()
     superToroid = std::make_unique<SuperQuadric>(
         pSuperQuadricShader.get(),
         SuperSurfaceType::SUPER_TOROID,
-        glm::vec3(3.0f, 0.0f, 0.0f),  // Center
+        glm::vec3(0.0f, 0.0f, 0.0f),  // Center
         1.0f,                          // Radius
-        0.0f,                          // Height (not used for toroid)
+        3.0f,                          // Height (not used for toroid)
         3.0f,                          // Major Radius
         glm::vec3(0.31f, 0.5f, 1.0f),  // Color (Blue)
         1.0f, 1.0f, 1.0f, 2.0f, 2.0f, // Super-Toroid parameters (a, b, c, m, n)
@@ -455,6 +455,12 @@ void App::render()
     pSphereShader->setVec3("lightPos", lightPos);
     pSphereShader->setVec3("lightColor", lightColor);
 
+    pSuperQuadricShader->use();
+    pSuperQuadricShader->setMat4("view", view);
+    pSuperQuadricShader->setMat4("projection", projection);
+    pSuperQuadricShader->setVec3("ViewPos", camera.position);
+    pSuperQuadricShader->setVec3("lightPos", lightPos);
+    pSuperQuadricShader->setVec3("lightColor", lightColor);
     // Render.
     // for (auto & s : shapes)
     // {
@@ -506,10 +512,27 @@ void App::render()
         dodecahedron->render(t);
     }
     else if (userMode == 7){
-        // std::cout<<"Rendering Super Ellipsoid\n";
         superEllipsoid->render(t);
     }
     else if (userMode == 8){
         superToroid->render(t);
     }
 }
+
+
+/*
+// Super-Toroid Parametric Equations
+        pos = center + vec3(
+            (majorRadius + radius * cos(m * v)) * cos(u),
+            radius * sin(m * v),
+            (majorRadius + radius * cos(m * v)) * sin(u)
+        );
+
+        // Compute the normal for Super-Toroid
+        normal = normalize(vec3(
+            cos(u) * cos(m * v),
+            sin(m * v),
+            sin(u) * cos(m * v)
+        ));
+
+*/

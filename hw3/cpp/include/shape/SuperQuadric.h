@@ -2,12 +2,9 @@
 #ifndef SUPERQUADRIC_H
 #define SUPERQUADRIC_H
 
-
-#include <string>
-#include <vector>
-#include <unordered_map>
 #include <glm/glm.hpp>
-#include "shape/Mesh.h"
+#include "shape/GLShape.h"
+#include "util/Shader.h"
 
 enum class SuperSurfaceType {
     SUPER_ELLIPSOID = 4,
@@ -41,8 +38,8 @@ private:
     // Super-Ellipsoid Parameters
     float a, b, c, m, n; // For Super-Ellipsoid
 
-    // For rendering
-    GLuint vao, vbo;
+    // // For rendering
+    // GLuint vao, vbo;
 };
 
 #endif // SUPERQUADRIC_H

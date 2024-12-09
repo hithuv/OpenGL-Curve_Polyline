@@ -77,7 +77,7 @@ private:
     std::unique_ptr<SuperQuadric> superToroid;
 
     // Viewing
-    Camera camera {{0.0f, 0.0f, 10.0f}};
+    Camera camera {{2.0f, 0.0f, 12.0f}};
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 projection = glm::mat4(1.0f);
 

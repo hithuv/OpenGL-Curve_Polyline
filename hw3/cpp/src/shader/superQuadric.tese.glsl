@@ -38,6 +38,8 @@ void main()
     vec3 pos;
     vec3 normal;
 
+    
+
     if (surfaceType == 4) // Super-Ellipsoid
     {
         // Super-Ellipsoid Parametric Equations
